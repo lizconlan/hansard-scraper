@@ -1,0 +1,5 @@
+*~
+.DS_Store
+config/*.yml
+.sass-cache/
+*.bbprojectd/
