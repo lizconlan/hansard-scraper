@@ -4,7 +4,7 @@ class Section
   include MongoMapper::Document
   
   belongs_to :hansard
-  many :fragments, :in => :fragment_ids
+  many :fragments, :in => :fragment_ids, :order => :sequence
   
   def date
     hansard.date

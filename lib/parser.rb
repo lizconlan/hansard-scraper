@@ -104,7 +104,10 @@ class Parser
       end
       
       @hansard_section = Section.find_or_create_by_id(section_id)
+      @fragment_seq = 0
       @hansard_section.hansard = @hansard
+      @section_seq += 1
+      @hansard_section.sequence = @section_seq
       @hansard.save
       
       @hansard.sections << @hansard_section

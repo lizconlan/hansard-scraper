@@ -3,7 +3,7 @@ require 'mongo_mapper'
 class Hansard
   include MongoMapper::Document
   
-  many :sections, :in => :section_ids
+  many :sections, :in => :section_ids, :order => :sequence
   
   key :date, String
   key :volume, String

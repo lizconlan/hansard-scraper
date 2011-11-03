@@ -17,7 +17,9 @@ class WHDebatesParser < Parser
     @page = 0
     @count = 0
     @contribution_count = 0
-    @sequence = 0
+    @section_seq = 0
+    @fragment_seq = 0
+    @element_seq = 0
 
     @members = {}
     @section_members = {}
@@ -145,21 +147,22 @@ class WHDebatesParser < Parser
     
     def store_debate(page)
       if @intro[:title]
-        @sequence += 1
-        intro_id = "#{@hansard_section.id}_s#{@sequence}" 
+        @fragment_seq += 1
+        intro_id = "#{@hansard_section.id}_#{@fragment_seq}"
         intro = Intro.find_or_create_by_id(intro_id)
+        @element_seq = 0
         intro.title = @intro[:title]
         intro.section = @hansard_section
-        intro.sequence = @sequence
+        intro.sequence = @fragment_seq
         
         @intro[:snippets].each do |snippet|
-          @sequence += 1
-          element_id = "#{intro.id}_e#{@sequence}"
+          @element_seq += 1
+          element_id = "#{intro.id}_e#{@element_seq}"
           
           element = NonContributionText.find_or_create_by_id(element_id)
           element.fragment = intro
           element.text = snippet
-          element.sequence = @sequence
+          element.sequence = @element_seq
           
           element.save
           intro.elements << element
@@ -167,7 +170,7 @@ class WHDebatesParser < Parser
         intro.save
         @hansard_section.fragments << intro
         @hansard_section.save
-        
+
         @intro = {:snippets => []}
       else
         handle_contribution(@member, @member, page)
@@ -187,6 +190,7 @@ class WHDebatesParser < Parser
           end
         
           @debate = Debate.find_or_create_by_id(segment_id)
+          @element_seq = 0
           @hansard_section.fragments << @debate
           @hansard_section.save
         
@@ -201,23 +205,24 @@ class WHDebatesParser < Parser
           @debate.chair = @chair
           @debate.url = @segment_link
           
-          @sequence += 1
-          @debate.sequence = @sequence
+          @fragment_seq += 1
+          @debate.sequence = @fragment_seq
           
           @snippet.each do |snippet|
-            @sequence += 1
-            element_id = "#{@debate.id}_e#{@sequence}"
-            element = Contribution.find_or_create_by_id(element_id)
-            element.text = snippet.text
-            element.fragment = @debate
-            element.member = snippet.speaker
-            element.sequence = @sequence
-            element.save
-            @debate.elements << element
+            unless snippet.text == @debate.title
+              @element_seq += 1
+              element_id = "#{@debate.id}_e#{@element_seq}"
+              element = Contribution.find_or_create_by_id(element_id)
+              element.text = snippet.text
+              element.fragment = @debate
+              element.member = snippet.speaker
+              element.sequence = @element_seq
+              element.save
+              @debate.elements << element
+            end
           end
         
           @debate.save
-
           @start_column = @end_column if @end_column != ""
       
           p @subject

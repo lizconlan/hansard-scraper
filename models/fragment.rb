@@ -4,7 +4,7 @@ class Fragment
   include MongoMapper::Document
   
   belongs_to :section
-  many :elements, :in => :element_ids
+  many :elements, :in => :element_ids, :order => :sequence
   
   key :_type, String
   key :hansard_id, BSON::ObjectId
