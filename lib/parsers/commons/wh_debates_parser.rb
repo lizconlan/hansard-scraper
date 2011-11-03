@@ -162,25 +162,24 @@ class WHDebatesParser < Parser
         #     
         # categories = {"house" => house, "section" => section}
         
-        @fragment = Fragment.find_or_create_by_id(segment_id)
-        @hansard_section.fragments << fragment
+        @debate = Debate.find_or_create_by_id(segment_id)
+        @hansard_section.debates << @debate
         @hansard_section.save
         
-        @fragment.hansard.volume = page.volume
-        @fragment.hansard.part = sanitize_text(page.part.to_s)
-        @fragment.hansard.save
+        @hansard.volume = page.volume
+        @hansard.part = sanitize_text(page.part.to_s)
+        @hansard.save
         
-        @fragment.id = segment_id
-        @fragment.section = @hansard_section
-        @fragment.members = names
+        @debate.id = segment_id
+        @debate.section = @hansard_section
+        @debate.members = names
 
-        @fragment.subject = @subject
-        @fragment.chair = @chair
-        @fragment.url = @segment_link
-        @fragment.text = @snippet.join(" \n\n ")
+        @debate.subject = @subject
+        @debate.chair = @chair
+        @debate.url = @segment_link
+        @debate.text = @snippet.join(" \n\n ")
         
-        #@indexer.add_document(fragment)
-        @fragment.save
+        @debate.save
 
         @start_column = @end_column if @end_column != ""
       

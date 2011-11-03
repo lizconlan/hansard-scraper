@@ -4,17 +4,13 @@ require 'rest-client'
 require 'date'
 require 'time'
 
-require 'lib/indexer'
-
 require 'models/hansard_page'
 require 'models/hansard_member'
 
-require 'models/hansard_fragment'
-
-require 'models/hansard/hansard'
-require 'models/hansard/section'
-require 'models/hansard/fragment'
-require 'models/hansard/element'
+require 'models/hansard'
+require 'models/section'
+require 'models/debate'
+require 'models/debate_element'
 
 class Parser
   attr_reader :date, :doc_id, :house
@@ -94,7 +90,7 @@ class Parser
   def parse_pages
     init_vars()
     
-    @indexer = Indexer.new()
+    #@indexer = Indexer.new()
     
     unless link_to_first_page
       warn "No #{section} data available for this date"
