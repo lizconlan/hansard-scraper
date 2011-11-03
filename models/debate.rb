@@ -12,7 +12,7 @@ class Debate
   key :columns, Array
   key :members, Array
   key :chair, String
-  key :subject, String
+  key :title, String
   key :sequence, Integer
   
   def date
