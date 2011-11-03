@@ -39,3 +39,7 @@ class HansardPage
       @title = doc.xpath("//head/title").text.strip
     end
 end
+
+class Snippet
+  attr_accessor :text, :speaker, :columns
+end

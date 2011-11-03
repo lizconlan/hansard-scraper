@@ -1,18 +1,17 @@
 require 'mongo_mapper'
 
-class Debate
+class Fragment
   include MongoMapper::Document
   
   belongs_to :section
-  many :debate_elements, :in => :element_ids
+  many :elements, :in => :element_ids
   
+  key :_type, String
   key :hansard_id, BSON::ObjectId
+  key :title, String
   key :url, String
   key :element_ids, Array
   key :columns, Array
-  key :members, Array
-  key :chair, String
-  key :title, String
   key :sequence, Integer
   
   def date
@@ -34,4 +33,12 @@ class Debate
   def section
     section.name
   end
+end
+
+class Debate < Fragment
+  key :members, Array
+  key :chair, String
+end
+
+class Intro < Fragment
 end

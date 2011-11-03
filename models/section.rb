@@ -4,7 +4,7 @@ class Section
   include MongoMapper::Document
   
   belongs_to :hansard
-  many :debates, :in => :debate_ids
+  many :fragments, :in => :fragment_ids
   
   def date
     hansard.date
@@ -22,7 +22,7 @@ class Section
     hansard.house
   end
   
-  key :debate_ids, Array
+  key :fragment_ids, Array
   key :name, String
   key :sequence, Integer
 end

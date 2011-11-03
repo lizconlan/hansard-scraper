@@ -9,8 +9,8 @@ require 'models/hansard_member'
 
 require 'models/hansard'
 require 'models/section'
-require 'models/debate'
-require 'models/debate_element'
+require 'models/fragment'
+require 'models/element'
 
 class Parser
   attr_reader :date, :doc_id, :house
@@ -26,7 +26,9 @@ class Parser
     @hansard.house = house
     @hansard.date = date
     @hansard_section = nil
-    @stored_contribution = nil
+    @fragment = nil
+    @element = nil
+    @current_speaker = ""
   end
   
   def get_section_index(section)
@@ -117,7 +119,7 @@ class Parser
       end
     
       #flush the buffer
-      unless @snippet.empty? or @snippet.join("").length == 0
+      unless @snippet.empty?
         store_debate(page)
         reset_vars()
       end
