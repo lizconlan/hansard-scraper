@@ -19,7 +19,7 @@ class WHDebatesParser < Parser
     @contribution_count = 0
     @section_seq = 0
     @fragment_seq = 0
-    @element_seq = 0
+    @para_seq = 0
 
     @members = {}
     @section_members = {}
@@ -150,22 +150,22 @@ class WHDebatesParser < Parser
         @fragment_seq += 1
         intro_id = "#{@hansard_section.id}_#{@fragment_seq}"
         intro = Intro.find_or_create_by_id(intro_id)
-        @element_seq = 0
+        @para_seq = 0
         intro.title = @intro[:title]
         intro.section = @hansard_section
         intro.sequence = @fragment_seq
         
         @intro[:snippets].each do |snippet|
-          @element_seq += 1
-          element_id = "#{intro.id}_e#{@element_seq}"
+          @para_seq += 1
+          para_id = "#{intro.id}_e#{@para_seq}"
           
-          element = NonContributionText.find_or_create_by_id(element_id)
-          element.fragment = intro
-          element.text = snippet
-          element.sequence = @element_seq
+          para = NonContributionPara.find_or_create_by_id(para_id)
+          para.fragment = intro
+          para.text = snippet
+          para.sequence = @para_seq
           
-          element.save
-          intro.elements << element
+          para.save
+          intro.paragraphs << para
         end
         intro.save
         @hansard_section.fragments << intro
@@ -190,7 +190,7 @@ class WHDebatesParser < Parser
           end
         
           @debate = Debate.find_or_create_by_id(segment_id)
-          @element_seq = 0
+          @para_seq = 0
           @hansard_section.fragments << @debate
           @hansard_section.save
         
@@ -210,15 +210,15 @@ class WHDebatesParser < Parser
           
           @snippet.each do |snippet|
             unless snippet.text == @debate.title
-              @element_seq += 1
-              element_id = "#{@debate.id}_e#{@element_seq}"
-              element = Contribution.find_or_create_by_id(element_id)
-              element.text = snippet.text
-              element.fragment = @debate
-              element.member = snippet.speaker
-              element.sequence = @element_seq
-              element.save
-              @debate.elements << element
+              @para_seq += 1
+              para_id = "#{@debate.id}_e#{@para_seq}"
+              para = ContributionPara.find_or_create_by_id(para_id)
+              para.text = snippet.text
+              para.fragment = @debate
+              para.member = snippet.speaker
+              para.sequence = @para_seq
+              para.save
+              @debate.paragraphs << para
             end
           end
         

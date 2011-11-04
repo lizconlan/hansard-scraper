@@ -1,6 +1,6 @@
 require 'mongo_mapper'
 
-class Element
+class Paragraph
   include MongoMapper::Document
   belongs_to :fragment
     
@@ -12,14 +12,14 @@ class Element
   key :sequence, Integer
 end
 
-class Timestamp < Element
+class Timestamp < Paragraph
 end
 
-class Contribution < Element
+class ContributionPara < Paragraph
   key :member, String
   key :prefix_html, String
 end
 
-class NonContributionText < Element
+class NonContributionPara < Paragraph
   key :description, String
 end

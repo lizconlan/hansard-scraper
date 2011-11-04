@@ -16,7 +16,7 @@ require 'lib/parsers/commons/wh_debates_parser'
 require 'models/hansard'
 require 'models/section'
 require 'models/fragment'
-require 'models/element'
+require 'models/paragraph'
 
 #non-persisted models
 require 'models/hansard_member'

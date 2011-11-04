@@ -10,7 +10,7 @@ require 'models/hansard_member'
 require 'models/hansard'
 require 'models/section'
 require 'models/fragment'
-require 'models/element'
+require 'models/paragraph'
 
 class Parser
   attr_reader :date, :doc_id, :house
