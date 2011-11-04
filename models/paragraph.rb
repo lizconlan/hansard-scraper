@@ -7,7 +7,7 @@ class Paragraph
   key :_type, String
   key :debate_id, BSON::ObjectId
   key :url, String
-  key :columns, Array
+  key :column, String
   key :text, String
   key :sequence, Integer
 end

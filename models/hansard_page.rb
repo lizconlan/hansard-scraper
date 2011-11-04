@@ -41,5 +41,5 @@ class HansardPage
 end
 
 class Snippet
-  attr_accessor :text, :speaker, :columns
+  attr_accessor :text, :speaker, :column, :desc
 end

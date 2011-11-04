@@ -57,6 +57,7 @@ class WHDebatesParser < Parser
           text = node.text.gsub("\n", "").squeeze(" ").strip
           snippet = Snippet.new
           snippet.text = sanitize_text(text)
+          snippet.column = @end_column
           @snippet << snippet
           @subject = sanitize_text(text)
           @segment_link = "#{page.url}\##{@last_link}"
@@ -67,7 +68,11 @@ class WHDebatesParser < Parser
           end
           @intro[:snippets] << text if @intro[:title]
         when "h5"
-          #do timestamp stuff
+          snippet = Snippet.new
+          snippet.text = node.text
+          snippet.desc = "timestamp"
+          snippet.column = @end_column
+          @snippet << snippet
         when "p" 
           column_desc = ""
           member_name = ""
@@ -140,6 +145,7 @@ class WHDebatesParser < Parser
             snippet = Snippet.new
             snippet.text = sanitize_text(text)
             snippet.speaker = @member.index_name if @member
+            snippet.column = @end_column
             @snippet << snippet
           end
       end
@@ -209,15 +215,28 @@ class WHDebatesParser < Parser
           @debate.sequence = @fragment_seq
           
           @snippet.each do |snippet|
-            unless snippet.text == @debate.title
+            unless snippet.text == @debate.title or snippet.text == ""
               @para_seq += 1
               para_id = "#{@debate.id}_e#{@para_seq}"
-              para = ContributionPara.find_or_create_by_id(para_id)
+              
+              case snippet.desc
+                when "timestamp"
+                  para = Timestamp.find_or_create_by_id(para_id)
+                else
+                  if snippet.speaker.nil?
+                    para = NonContributionPara.find_or_create_by_id(para_id)
+                  else
+                    para = ContributionPara.find_or_create_by_id(para_id)
+                    para.member = snippet.speaker
+                  end
+              end
+              
               para.text = snippet.text
-              para.fragment = @debate
-              para.member = snippet.speaker
+              para.column = snippet.column
               para.sequence = @para_seq
+              para.fragment = @debate
               para.save
+              
               @debate.paragraphs << para
             end
           end
