@@ -15,7 +15,6 @@ class WHDebatesParser < Parser
   
   def init_vars
     @page = 0
-    @count = 0
     @contribution_count = 0
     @section_seq = 0
     @fragment_seq = 0
@@ -156,7 +155,7 @@ class WHDebatesParser < Parser
         @fragment_seq += 1
         intro_id = "#{@hansard_section.id}_#{@fragment_seq}"
         intro = Intro.find_or_create_by_id(intro_id)
-        @para_seq = 0
+        @para_seq += 1
         intro.title = @intro[:title]
         intro.section = @hansard_section
         intro.sequence = @fragment_seq
@@ -173,6 +172,7 @@ class WHDebatesParser < Parser
           para.save
           intro.paragraphs << para
         end
+        
         intro.save
         @hansard_section.fragments << intro
         @hansard_section.save
@@ -182,9 +182,9 @@ class WHDebatesParser < Parser
         handle_contribution(@member, @member, page)
       
         if @segment_link #no point storing pointers that don't link back to the source
-          segment_id = "#{doc_id}_wh_#{@count}"
+          @fragment_seq += 1
+          segment_id = "#{@hansard_section.id}_#{@fragment_seq}"
                   
-          @count += 1
           names = []
           @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
       
