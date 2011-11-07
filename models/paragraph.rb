@@ -18,6 +18,10 @@ class Paragraph
   def self.by_member_and_fragment_id(member_name, fragment_id)
     where(:_type => "ContributionPara", :member => member_name, :fragment_id => fragment_id).sort(:sequence)
   end
+  
+  def self.by_member_and_hansard_id(member_name, hansard_id)
+    where(:_type => "ContributionPara", :member => member_name, :fragment_id => /^#{hansard_id}/).sort(:fragment_id, :sequence)
+  end
 end
 
 class Timestamp < Paragraph
