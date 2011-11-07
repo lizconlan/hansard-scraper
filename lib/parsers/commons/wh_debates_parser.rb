@@ -15,10 +15,10 @@ class WHDebatesParser < Parser
   
   def init_vars
     @page = 0
-    @contribution_count = 0
     @section_seq = 0
     @fragment_seq = 0
     @para_seq = 0
+    @contribution_seq = 0
 
     @members = {}
     @section_members = {}
@@ -112,6 +112,7 @@ class WHDebatesParser < Parser
                 member = HansardMember.new(name, name, "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+                @contribution_seq += 1
               when /^(([^\(]*) \(([^\(]*)\):)/
                 #we has a minister
                 post = $2
@@ -119,6 +120,7 @@ class WHDebatesParser < Parser
                 member = HansardMember.new(name, "", "", "", post)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+                @contribution_seq += 1
               when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
                 #an MP speaking for the first time in the debate
                 name = $2
@@ -127,12 +129,14 @@ class WHDebatesParser < Parser
                 member = HansardMember.new(name, "", constituency, party)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+                @contribution_seq += 1
               when /^(([^\(]*):)/
                 #an MP who's spoken before
                 name = $2
                 member = HansardMember.new(name, name)
                 handle_contribution(@member, member, page)
                 @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+                @contribution_seq += 1
               else
                 if @member
                   unless text =~ /^Sitting suspended|^Sitting adjourned|^On resuming|^Question put/ or
@@ -145,6 +149,7 @@ class WHDebatesParser < Parser
             snippet.text = sanitize_text(text)
             snippet.speaker = @member.index_name if @member
             snippet.column = @end_column
+            snippet.contribution_seq = @contribution_seq
             @snippet << snippet
           end
       end
@@ -217,7 +222,7 @@ class WHDebatesParser < Parser
           @snippet.each do |snippet|
             unless snippet.text == @debate.title or snippet.text == ""
               @para_seq += 1
-              para_id = "#{@debate.id}_e#{@para_seq}"
+              para_id = "#{@debate.id}_p#{@para_seq}"
               
               case snippet.desc
                 when "timestamp"
@@ -228,6 +233,7 @@ class WHDebatesParser < Parser
                   else
                     para = ContributionPara.find_or_create_by_id(para_id)
                     para.member = snippet.speaker
+                    para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq}"
                   end
               end
               

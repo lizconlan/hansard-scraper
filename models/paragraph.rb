@@ -10,6 +10,14 @@ class Paragraph
   key :column, String
   key :text, String
   key :sequence, Integer
+  
+  def self.by_member(member_name)
+    where(:_type => "ContributionPara", :member => member_name)
+  end
+  
+  def self.by_member_and_fragment_id(member_name, fragment_id)
+    where(:_type => "ContributionPara", :member => member_name, :fragment_id => fragment_id).sort(:sequence)
+  end
 end
 
 class Timestamp < Paragraph
@@ -18,6 +26,7 @@ end
 class ContributionPara < Paragraph
   key :member, String
   key :prefix_html, String
+  key :contribution_id, String
 end
 
 class NonContributionPara < Paragraph
