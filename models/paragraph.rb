@@ -19,8 +19,8 @@ class Paragraph
     where(:_type => "ContributionPara", :member => member_name, :fragment_id => fragment_id).sort(:sequence)
   end
   
-  def self.by_member_and_hansard_id(member_name, hansard_id)
-    where(:_type => "ContributionPara", :member => member_name, :fragment_id => /^#{hansard_id}/).sort(:fragment_id, :sequence)
+  def self.by_member_and_fragment_id_start(member_name, fragment_start)
+    where(:_type => "ContributionPara", :member => member_name, :fragment_id => /^#{fragment_start}/).sort(:fragment_id, :sequence)
   end
 end
 

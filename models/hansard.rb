@@ -15,7 +15,7 @@ class Hansard
     contribs = []
     contrib = []
     last_id = ""
-    paras = Paragraph.by_member_and_hansard_id(member_name, id).all
+    paras = Paragraph.by_member_and_fragment_id_start(member_name, id).all
     paras.each do |para|
       unless para.contribution_id == last_id
         unless contribs.empty? and contrib.empty?
@@ -26,6 +26,7 @@ class Hansard
       contrib << para
       last_id = para.contribution_id
     end
+    contribs << contrib unless contrib.empty?
     contribs
   end
 end

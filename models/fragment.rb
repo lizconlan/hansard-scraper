@@ -29,6 +29,7 @@ class Fragment
       contrib << para
       last_id = para.contribution_id
     end
+    contribs << contrib unless contrib.empty?
     contribs
   end
   
