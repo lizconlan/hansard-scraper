@@ -52,6 +52,28 @@ class Fragment
   def section
     section.name
   end
+  
+  def to_simple_html
+    html = []
+    paragraphs.each do |para|
+      case para._type
+        when "Timestamp"
+          html << "<div>#{para.text}</div>"
+        else
+          if (para.text.strip[0..0].to_i.to_s != para.text.strip[0..0]) and 
+             (para.text.strip[0..0].downcase == para.text.strip[0..0]) and
+             (para.text.strip[0..0] != '"')
+            prev = html.pop
+            prev.gsub!("</p>","")
+            prev = "#{prev} #{para.text.gsub('\304\243', "£")}</p>".squeeze(" ")
+            html << prev
+          else
+            html << "<p>#{para.text.gsub('\304\243', "£")}</p>"
+          end
+      end
+    end
+    html.join("<p>&nbsp;</p>")
+  end
 end
 
 class Debate < Fragment
