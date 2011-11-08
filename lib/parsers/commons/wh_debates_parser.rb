@@ -158,7 +158,7 @@ class WHDebatesParser < Parser
     def store_debate(page)
       if @intro[:title]
         @fragment_seq += 1
-        intro_id = "#{@hansard_section.id}_#{@fragment_seq}"
+        intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
         intro = Intro.find_or_create_by_id(intro_id)
         @para_seq += 1
         intro.title = @intro[:title]
@@ -167,7 +167,7 @@ class WHDebatesParser < Parser
         
         @intro[:snippets].each do |snippet|
           @para_seq += 1
-          para_id = "#{intro.id}_e#{@para_seq}"
+          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
           
           para = NonContributionPara.find_or_create_by_id(para_id)
           para.fragment = intro
@@ -188,7 +188,7 @@ class WHDebatesParser < Parser
       
         if @segment_link #no point storing pointers that don't link back to the source
           @fragment_seq += 1
-          segment_id = "#{@hansard_section.id}_#{@fragment_seq}"
+          segment_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
                   
           names = []
           @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
@@ -222,7 +222,7 @@ class WHDebatesParser < Parser
           @snippet.each do |snippet|
             unless snippet.text == @debate.title or snippet.text == ""
               @para_seq += 1
-              para_id = "#{@debate.id}_p#{@para_seq}"
+              para_id = "#{@debate.id}_p#{@para_seq.to_s.rjust(6, "0")}"
               
               case snippet.desc
                 when "timestamp"
@@ -233,7 +233,7 @@ class WHDebatesParser < Parser
                   else
                     para = ContributionPara.find_or_create_by_id(para_id)
                     para.member = snippet.speaker
-                    para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq}"
+                    para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
                   end
               end
               
