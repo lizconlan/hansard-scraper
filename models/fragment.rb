@@ -65,7 +65,7 @@ class Fragment
              (para.text.strip[0..0] != '"')
             prev = html.pop
             prev.gsub!("</p>","")
-            prev = "#{prev} #{para.text.gsub("u\304\243", "YO!!!!!")}</p>".squeeze(" ")
+            prev = "#{prev} #{para.text}</p>".squeeze(" ")
             html << prev
           else
             if para._type == "ContributionPara" and para.speaker_printed_name and para.text.strip =~ /^#{para.speaker_printed_name}/
