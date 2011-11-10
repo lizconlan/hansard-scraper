@@ -29,7 +29,7 @@ end
 
 class ContributionPara < Paragraph
   key :member, String
-  key :prefix_html, String
+  key :speaker_printed_name, String
   key :contribution_id, String
 end
 

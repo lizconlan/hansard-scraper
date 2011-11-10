@@ -1,8 +1,9 @@
 class HansardMember
-  attr_reader :name, :index_name, :post, :party, :constituency, :search_name
+  attr_reader :name, :index_name, :post, :party, :constituency, :search_name, :printed_name
   attr_accessor :contributions
   
   def initialize(name, search_name="", constituency="", party="", post="")
+    @printed_name = name
     if name =~ / Speaker$/
       @search_name = @index_name = name.squeeze(" ").strip
     else

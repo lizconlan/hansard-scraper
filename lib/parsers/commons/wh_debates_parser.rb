@@ -147,7 +147,10 @@ class WHDebatesParser < Parser
             end
             snippet = Snippet.new
             snippet.text = sanitize_text(text)
-            snippet.speaker = @member.index_name if @member
+            if @member
+              snippet.speaker = @member.index_name
+              snippet.printed_name = @member.printed_name
+            end
             snippet.column = @end_column
             snippet.contribution_seq = @contribution_seq
             @snippet << snippet
@@ -234,6 +237,9 @@ class WHDebatesParser < Parser
                     para = ContributionPara.find_or_create_by_id(para_id)
                     para.member = snippet.speaker
                     para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
+                    if snippet.text =~ /^#{snippet.printed_name}/
+                      para.speaker_printed_name = snippet.printed_name
+                    end
                   end
               end
               
