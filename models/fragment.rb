@@ -68,7 +68,7 @@ class Fragment
             prev = "#{prev} #{para.text}</p>".squeeze(" ")
             html << prev
           else
-            if para._type == "ContributionPara" and para.speaker_printed_name and para.text.strip =~ /^#{para.speaker_printed_name}/
+            if para._type == "ContributionPara" and para.speaker_printed_name and para.text.strip =~ /^#{para.speaker_printed_name.gsub('(','\(').gsub(')','\)')}/
               html << "<p><b>#{para.speaker_printed_name}</b>#{para.text[para.speaker_printed_name.length..para.text.length]}"
             else
               html << "<p>#{para.text}</p>"
@@ -77,6 +77,7 @@ class Fragment
       end
     end
     html.join("<p>&nbsp;</p>")
+    "#{url}<h1>#{title}</h1> #{html}"
   end
 end
 

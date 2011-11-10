@@ -96,6 +96,11 @@ class WHDebatesParser < Parser
           end
           
           text = node.content.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
+          if node.xpath("i").first
+            italic_text = node.xpath("i").first.content
+          else
+            italic_text = ""
+          end
           
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
@@ -111,7 +116,6 @@ class WHDebatesParser < Parser
                 post = "Debate Chair"
                 member = HansardMember.new(name, name, "", "", post)
                 handle_contribution(@member, member, page)
-                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
                 @contribution_seq += 1
               when /^(([^\(]*) \(([^\(]*)\):)/
                 #we has a minister
@@ -119,8 +123,7 @@ class WHDebatesParser < Parser
                 name = $3
                 member = HansardMember.new(name, "", "", "", post)
                 handle_contribution(@member, member, page)
-                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
-                @contribution_seq += 1
+                @contribution_seq += 1                
               when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
                 #an MP speaking for the first time in the debate
                 name = $2
@@ -128,28 +131,32 @@ class WHDebatesParser < Parser
                 party = $4
                 member = HansardMember.new(name, "", constituency, party)
                 handle_contribution(@member, member, page)
-                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
                 @contribution_seq += 1
               when /^(([^\(]*):)/
                 #an MP who's spoken before
                 name = $2
                 member = HansardMember.new(name, name)
-                handle_contribution(@member, member, page)
-                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+                handle_contribution(@member, member, page)                
                 @contribution_seq += 1
               else
-                if @member
-                  unless text =~ /^Sitting suspended|^Sitting adjourned|^On resuming|^Question put/ or
-                      text == "#{@member.search_name} rose\342\200\224"
-                    @contribution.segments << sanitize_text(text)
-                  end
+                if text == "#{member_name} #{italic_text}".squeeze(" ")
+                  member = HansardMember.new(member_name, member_name)
+                  handle_contribution(@member, member, page)
+                  @contribution_seq += 1
                 end
-            end
+            end              
+              
             snippet = Snippet.new
-            snippet.text = sanitize_text(text)
+            snippet.text = sanitize_text(text)       
             if @member
+              if snippet.text =~ /^#{@member.post} \(#{@member.name}\)/
+                snippet.printed_name = "#{@member.post} (#{@member.name})"
+              elsif snippet.text =~ /^#{@member.search_name}/
+                snippet.printed_name = @member.search_name
+              else
+                snippet.printed_name = @member.printed_name
+              end
               snippet.speaker = @member.index_name
-              snippet.printed_name = @member.printed_name
             end
             snippet.column = @end_column
             snippet.contribution_seq = @contribution_seq
@@ -237,7 +244,7 @@ class WHDebatesParser < Parser
                     para = ContributionPara.find_or_create_by_id(para_id)
                     para.member = snippet.speaker
                     para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
-                    if snippet.text =~ /^#{snippet.printed_name}/
+                    if snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
                       para.speaker_printed_name = snippet.printed_name
                     end
                   end
