@@ -27,7 +27,7 @@ class WHDebatesParser < Parser
     
     @last_link = ""
     @snippet = []
-    @intro = {:snippets => []}
+    @intro = {:snippets => [], :columns => []}
     @subject = ""
     @start_column = ""
     @end_column = ""
@@ -65,7 +65,10 @@ class WHDebatesParser < Parser
           if text[text.length-13..text.length-2] == "in the Chair"
             @chair = text[1..text.length-15]
           end
-          @intro[:snippets] << text if @intro[:title]
+          if @intro[:title]
+            @intro[:snippets] << text
+            @intro[:columns] << @end_column
+          end
         when "h5"
           snippet = Snippet.new
           snippet.text = node.text
@@ -175,7 +178,7 @@ class WHDebatesParser < Parser
         intro.section = @hansard_section
         intro.sequence = @fragment_seq
         
-        @intro[:snippets].each do |snippet|
+        @intro[:snippets].each_with_index do |snippet, i|
           @para_seq += 1
           para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
           
@@ -183,6 +186,7 @@ class WHDebatesParser < Parser
           para.fragment = intro
           para.text = snippet
           para.sequence = @para_seq
+          para.column = @intro[:columns][i]
           
           para.save
           intro.paragraphs << para
@@ -259,7 +263,8 @@ class WHDebatesParser < Parser
               @debate.paragraphs << para
             end
           end
-        
+          
+          @debate.columns = @debate.paragraphs.collect{|x| x.column}.uniq
           @debate.save
           @start_column = @end_column if @end_column != ""
       
@@ -267,8 +272,6 @@ class WHDebatesParser < Parser
           p segment_id
           p @segment_link
           p ""
-      
-          store_member_contributions
         end
       end
     end
