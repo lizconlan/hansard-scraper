@@ -7,7 +7,7 @@ class Fragment
   many :paragraphs, :in => :paragraph_ids, :order => :sequence
   
   key :_type, String
-  key :hansard_id, BSON::ObjectId
+  key :section_id, BSON::ObjectId
   key :title, String
   key :url, String
   key :paragraph_ids, Array
@@ -32,6 +32,7 @@ class Fragment
     contribs << contrib unless contrib.empty?
     contribs
   end
+
   
   def to_simple_html
     html = []
