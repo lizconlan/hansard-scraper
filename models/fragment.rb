@@ -33,26 +33,6 @@ class Fragment
     contribs
   end
   
-  def date
-    section.date
-  end
-  
-  def volume
-    section.volume
-  end
-  
-  def part
-    section.part
-  end
-  
-  def house
-    section.house
-  end
-  
-  def section
-    section.name
-  end
-  
   def to_simple_html
     html = []
     paragraphs.each do |para|
@@ -76,7 +56,7 @@ class Fragment
           end
       end
     end
-    html.join("<p>&nbsp;</p>")
+    html = html.join("<p>&nbsp;</p>")
     "#{url}<h1>#{title}</h1> #{html}"
   end
 end
