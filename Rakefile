@@ -12,6 +12,9 @@ require 'lib/parsers/commons/wh_debates_parser'
 #require 'lib/parsers/commons/wms_parser'
 #require 'lib/parsers/commons/written_answers_parser'
 
+#indexer
+require 'lib/indexer'
+
 #persisted models
 require 'models/hansard'
 require 'models/section'
@@ -21,6 +24,7 @@ require 'models/paragraph'
 #non-persisted models
 require 'models/hansard_member'
 require 'models/hansard_page'
+require 'models/hansard_fragment'
 
 MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[:mongohq_url]
 
@@ -45,4 +49,30 @@ task :scrape_hansard do
   #great, go
   parser = WHDebatesParser.new(date)
   parser.parse_pages
+end
+
+desc "index a day's worth of hansard"
+task :index_hansard do
+  date = ENV['date']
+
+  #make sure date has been supplied and is valid
+  unless date
+    raise 'need to specify date in yyyy-mm-dd format'
+  else
+    unless date =~ /^\d{4}-\d{2}-\d{2}$/
+      raise 'need to specify date in yyyy-mm-dd format'
+    end
+  end
+  Date.parse(date)
+  
+  #great, go
+  indexer = Indexer.new
+  
+  hansard = Hansard.find_by_date(date)
+  hansard.sections.each do |section|
+    section.fragments.each do |fragment|
+      hf = HansardFragment.find(fragment.id)
+      indexer.add_document(hf)
+    end
+  end
 end
