@@ -9,7 +9,7 @@ class HansardFragment
   def initialize(doc)
     @id = doc[:id]
     @published_at = doc[:published_at]
-    @text = doc[:text]
+    @text = doc[:search_text]
     @subject = doc[:subject]
     @volume = doc[:volume]
     @part = doc[:part]
@@ -23,7 +23,6 @@ class HansardFragment
   
   def self.find(doc_id)
     frag = Fragment.find(doc_id)
-    texts = frag.paragraphs.collect{ |x| x.text }
     
     if frag.respond_to?("members")
       members = frag.members
@@ -45,17 +44,17 @@ class HansardFragment
     
     self.new({
       :id => frag.id,
-      :published_at => Time.parse("#{frag.section.hansard.date}T00:00:01Z"),
-      :text => texts.join(" "),
+      :published_at => Time.parse("#{frag.date}T00:00:01Z"),
+      :text => frag.search_text,
       :subject => frag.title,
-      :volume => frag.section.hansard.volume,
-      :part => frag.section.hansard.part,
+      :volume => frag.volume,
+      :part => frag.part,
       :columns => cols,
       :members => members,
       :chair => chair,
       :url => frag.url,
-      :house => frag.section.hansard.house,
-      :section => frag.section.name
+      :house => frag.house,
+      :section_name => frag.section_name
     })
   end
   
@@ -65,7 +64,7 @@ class HansardFragment
     string :part
     string :columns
     text :members
-    text :text
+    text :text, :stored => true
     string :chair
     string :url
     string :house
