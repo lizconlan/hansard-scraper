@@ -1,7 +1,7 @@
 require 'lib/parser'
 
 class WMSParser < Parser
-  attr_reader :section
+  attr_reader :section, :section_prefix
   
   def initialize(date, house="Commons", section="Written Ministerial Statements")
     super(date, house)
@@ -15,8 +15,10 @@ class WMSParser < Parser
   
   def init_vars
     @page = 0
-    @count = 0
-    @contribution_count = 0
+    @section_seq = 0
+    @fragment_seq = 0
+    @para_seq = 0
+    @contribution_seq = 0
 
     @members = {}
     @section_members = {}
@@ -25,6 +27,7 @@ class WMSParser < Parser
     
     @last_link = ""
     @snippet = []
+    @intro = {:snippets => [], :columns => [], :links => []}
     @subject = ""
     @department = ""
     @start_column = ""
@@ -35,12 +38,17 @@ class WMSParser < Parser
   
   def reset_vars
     @snippet = []
+    @members = {}
+    @section_members = {}
   end
   
   
   private
     def parse_node(node, page)
       case node.name
+        when "h2"
+          @intro[:title] = node.content
+          @intro[:link] = "#{page.url}\##{@last_link}"
         when "a"
           process_links_and_columns(node)   
         when "h3"
@@ -49,18 +57,47 @@ class WMSParser < Parser
             @snippet = []
             @segment_link = ""
           end
+          
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          @department = sanitize_text(text)
+          @department = sanitize_text(text)          
           @segment_link = "#{page.url}\##{@last_link}"
         when "h4"
-          unless @snippet.empty? or @snippet.join("").length == 0
-            store_debate(page)
-            @snippet = []
-            @segment_link = ""
+          text = node.content.gsub("\n", "").squeeze(" ").strip
+          
+          if @intro[:title]
+            @intro[:snippets] << text
+            @intro[:columns] << @end_column
+            @intro[:links] << "#{page.url}\##{@last_link}"
+          else
+            unless @snippet.empty? or @snippet.join("").length == 0
+              store_debate(page)
+              @snippet = []
+              @segment_link = ""
+            end
+            
+            @subject = sanitize_text(text)
+            @segment_link = "#{page.url}\##{@last_link}"
+            
+            snippet = Snippet.new
+            snippet.text = sanitize_text(text)
+            snippet.column = @end_column
+            @snippet << snippet
           end
-          text = node.text.gsub("\n", "").squeeze(" ").strip
-          @subject = sanitize_text(text)
-          @segment_link = "#{page.url}\##{@last_link}"
+        when "table"
+          if node.xpath("a") and node.xpath("a").length > 0
+            @last_link = node.xpath("a").last.attr("name")
+          end
+          
+          snippet = Snippet.new
+          snippet.text = node.to_html
+          snippet.link = "#{page.url}\##{@last_link}"
+          
+          if @member
+            snippet.speaker = @member.index_name
+          end
+          snippet.column = @end_column
+          snippet.contribution_seq = @contribution_seq
+          @snippet << snippet
         when "p"
           column_desc = ""
           member_name = ""
@@ -125,53 +162,154 @@ class WMSParser < Parser
                   end
                 end
             end
-            @snippet << sanitize_text(text)
+            
+            snippet = Snippet.new
+            snippet.text = sanitize_text(text)
+            snippet.link = "#{page.url}\##{@last_link}"
+            if @member
+              if snippet.text =~ /^#{@member.post} \(#{@member.name}\)/
+                snippet.printed_name = "#{@member.post} (#{@member.name})"
+              elsif snippet.text =~ /^#{@member.search_name}/
+                snippet.printed_name = @member.search_name
+              else
+                snippet.printed_name = @member.printed_name
+              end
+              snippet.speaker = @member.index_name
+            end
+            snippet.column = @end_column
+            snippet.contribution_seq = @contribution_seq
+            @snippet << snippet
           end
       end
     end
     
     def store_debate(page)
-      handle_contribution(@member, @member, page)
-      
-      if @segment_link #no point storing empty pointers
-        segment_id = "#{doc_id}_wms_#{@count}"
-        @count += 1
-        names = []
-        @members.each { |x, y| names << y.index_name unless names.include?(y.index_name) }
-
-        column_text = ""
-        if @start_column == @end_column or @end_column == ""
-          column_text = @start_column
-        else
-          column_text = "#{@start_column} to #{@end_column}"
+      if @intro[:title]
+        @fragment_seq += 1
+        intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
+        intro = Intro.find_or_create_by_id(intro_id)
+        @para_seq += 1
+        intro.title = @intro[:title]
+        intro.section = @hansard_section
+        intro.url = @intro[:link]
+        intro.sequence = @fragment_seq
+        
+        @intro[:snippets].each_with_index do |snippet, i|
+          @para_seq += 1
+          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
+          
+          para = NonContributionPara.find_or_create_by_id(para_id)
+          para.fragment = intro
+          para.text = snippet
+          para.sequence = @para_seq
+          para.url = @intro[:links][i]
+          para.column = @intro[:columns][i]
+          
+          para.save
+          intro.paragraphs << para
         end
-      
-        doc = {:title => "Statement: " + sanitize_text("#{@subject}"),
-         :volume => page.volume,
-         :columns => column_text,
-         :part => sanitize_text(page.part.to_s),
-         :department => @department,
-         :members => [names.first],
-         :subject => @subject,
-         :url => @segment_link,
-         :house => house,
-         :section => "Written Ministerial Statements",
-         :date => Time.parse("#{@date}T00:00:01Z")
-        }
-            
-        categories = {"house" => house, "section" => section}
-      
-        @indexer.add_document(segment_id, doc, @snippet.join(" "))
+        intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
+        
+        intro.save
+        @hansard_section.fragments << intro
+        @hansard_section.save
 
-        @start_column = @end_column if @end_column != ""
+        @intro = {:snippets => [], :columns => [], :links => []}
+      else
+        handle_contribution(@member, @member, page)
       
-        p @subject
-        p segment_id
-        p @segment_link
-        p ""
+        if @segment_link #no point storing pointers that don't link back to the source
+          @fragment_seq += 1
+          segment_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
+                        
+          column_text = ""
+          if @start_column == @end_column or @end_column == ""
+            column_text = @start_column
+          else
+            column_text = "#{@start_column} to #{@end_column}"
+          end
+        
+          @statement = Statement.find_or_create_by_id(segment_id)
+          @para_seq = 0
+          @hansard_section.fragments << @statement
+          @hansard_section.save
+        
+          @hansard.volume = page.volume
+          @hansard.part = sanitize_text(page.part.to_s)
+          @hansard.save
+        
+          @statement.section = @hansard_section
+
+          @statement.title = @subject
+          @statement.department = @department
+          @statement.url = @segment_link
+          
+          @statement.sequence = @fragment_seq
+          @statement.volume = page.volume
+          @statement.house = @hansard.house
+          @statement.section_name = @hansard_section.name
+          @statement.part = @hansard.part
+          @statement.date = @hansard.date
+          
+          search_text = []
+          
+          @snippet.each do |snippet|
+            unless snippet.text == @statement.title or snippet.text == ""
+              @para_seq += 1
+              para_id = "#{@statement.id}_p#{@para_seq.to_s.rjust(6, "0")}"
+              
+              case snippet.desc
+                when "timestamp"
+                  para = Timestamp.find_or_create_by_id(para_id)
+                  para.text = snippet.text
+                else
+                  if snippet.speaker.nil?
+                    para = NonContributionPara.find_or_create_by_id(para_id)
+                    para.text = snippet.text
+                  elsif snippet.text.strip[0..5] == "<table"
+                    para = ContributionTable.find_or_create_by_id(para_id)
+                    para.member = snippet.speaker
+                    para.contribution_id = "#{@statement.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
+                    para.html = snippet.text.strip
+                    
+                    table = Nokogiri::HTML(snippet.text)
+                    para.text = table.content
+                  else
+                    para = ContributionPara.find_or_create_by_id(para_id)
+                    para.member = snippet.speaker
+                    para.contribution_id = "#{@statement.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
+                    if snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                      para.speaker_printed_name = snippet.printed_name
+                    end
+                    para.text = snippet.text
+                  end
+              end
+              
+              search_text << para.text
+              para.url = snippet.link
+              para.column = snippet.column
+              para.sequence = @para_seq
+              para.fragment = @statement
+              para.save
+              
+              @statement.search_text = search_text.join(" ")
+              
+              @statement.paragraphs << para
+            end
+          end
+          
+          @statement.columns = @statement.paragraphs.collect{|x| x.column}.uniq
+          @statement.members = @statement.paragraphs.collect{|x| x.member}.uniq
+          @statement.save
+          @start_column = @end_column if @end_column != ""
       
-        store_member_contributions
+          p @subject
+          p segment_id
+          p @segment_link
+          p ""
+        end
       end
+      reset_vars()
     end
     
 end

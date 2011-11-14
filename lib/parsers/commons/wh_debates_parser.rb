@@ -237,7 +237,6 @@ class WHDebatesParser < Parser
           @debate.chair = @chair
           @debate.url = @segment_link
           
-          @fragment_seq += 1
           @debate.sequence = @fragment_seq
           @debate.volume = page.volume
           @debate.house = @hansard.house

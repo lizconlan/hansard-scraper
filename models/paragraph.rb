@@ -36,3 +36,9 @@ end
 class NonContributionPara < Paragraph
   key :description, String
 end
+
+class ContributionTable < Paragraph
+  key :html
+  key :member, String
+  key :contribution_id, String
+end
