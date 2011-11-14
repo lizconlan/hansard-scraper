@@ -92,8 +92,6 @@ class Parser
   def parse_pages
     init_vars()
     
-    #@indexer = Indexer.new()
-    
     unless link_to_first_page
       warn "No #{section} data available for this date"
     else
@@ -106,11 +104,13 @@ class Parser
       @hansard_section = Section.find_or_create_by_id(section_id)
       @fragment_seq = 0
       @hansard_section.hansard = @hansard
-      @section_seq += 1
-      @hansard_section.sequence = @section_seq
+      unless @hansard_section.sequence == @section_seq
+        @section_seq += 1 
+        @hansard_section.sequence = @section_seq
+      end
+      @hansard.sections << @hansard_section
       @hansard.save
       
-      @hansard.sections << @hansard_section
       @hansard_section.name = @section
       @hansard_section.save
       

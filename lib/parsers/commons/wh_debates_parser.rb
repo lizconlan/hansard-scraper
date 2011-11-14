@@ -27,7 +27,7 @@ class WHDebatesParser < Parser
     
     @last_link = ""
     @snippet = []
-    @intro = {:snippets => [], :columns => []}
+    @intro = {:snippets => [], :columns => [], :links => []}
     @subject = ""
     @start_column = ""
     @end_column = ""
@@ -45,6 +45,7 @@ class WHDebatesParser < Parser
       case node.name
         when "h2"
           @intro[:title] = node.content
+          @intro[:link] = "#{page.url}\##{@last_link}"
         when "a"
           process_links_and_columns(node)
         when "h3"
@@ -68,12 +69,14 @@ class WHDebatesParser < Parser
           if @intro[:title]
             @intro[:snippets] << text
             @intro[:columns] << @end_column
+            @intro[:links] << "#{page.url}\##{@last_link}"
           end
         when "h5"
           snippet = Snippet.new
           snippet.text = node.text
           snippet.desc = "timestamp"
           snippet.column = @end_column
+          snippet.link = "#{page.url}\##{@last_link}"
           @snippet << snippet
         when "p" 
           column_desc = ""
@@ -150,7 +153,8 @@ class WHDebatesParser < Parser
             end              
               
             snippet = Snippet.new
-            snippet.text = sanitize_text(text)       
+            snippet.text = sanitize_text(text)
+            snippet.link = "#{page.url}\##{@last_link}"
             if @member
               if snippet.text =~ /^#{@member.post} \(#{@member.name}\)/
                 snippet.printed_name = "#{@member.post} (#{@member.name})"
@@ -176,6 +180,7 @@ class WHDebatesParser < Parser
         @para_seq += 1
         intro.title = @intro[:title]
         intro.section = @hansard_section
+        intro.url = @intro[:link]
         intro.sequence = @fragment_seq
         
         @intro[:snippets].each_with_index do |snippet, i|
@@ -186,17 +191,19 @@ class WHDebatesParser < Parser
           para.fragment = intro
           para.text = snippet
           para.sequence = @para_seq
+          para.url = @intro[:links][i]
           para.column = @intro[:columns][i]
           
           para.save
           intro.paragraphs << para
         end
+        intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
         
         intro.save
         @hansard_section.fragments << intro
         @hansard_section.save
 
-        @intro = {:snippets => []}
+        @intro = {:snippets => [], :columns => [], :links => []}
       else
         handle_contribution(@member, @member, page)
       
@@ -263,6 +270,7 @@ class WHDebatesParser < Parser
               
               para.text = snippet.text
               search_text << snippet.text
+              para.url = snippet.link
               para.column = snippet.column
               para.sequence = @para_seq
               para.fragment = @debate
