@@ -9,6 +9,7 @@ class Paragraph
   key :url, String
   key :column, String
   key :text, String
+  key :html, String
   key :sequence, Integer
   
   def self.by_member(member_name)
@@ -38,7 +39,6 @@ class NonContributionPara < Paragraph
 end
 
 class ContributionTable < Paragraph
-  key :html
   key :member, String
   key :contribution_id, String
 end
