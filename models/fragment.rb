@@ -99,5 +99,13 @@ class Statement < Fragment
   key :members, Array
 end
 
+class Question < Fragment
+  key :department, String
+  key :subject, String
+  key :members, Array
+  key :number, String
+  key :type, String
+end
+
 class Intro < Fragment
 end

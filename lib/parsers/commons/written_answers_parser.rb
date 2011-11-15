@@ -1,7 +1,7 @@
 require 'lib/parser'
 
 class WrittenAnswersParser < Parser
-  attr_reader :section
+  attr_reader :section, :section_prefix
   
   def initialize(date, house="Commons", section="Written Answers")
     super(date, house)
@@ -15,9 +15,11 @@ class WrittenAnswersParser < Parser
   
   def init_vars
     @page = 0
-    @count = 0
-    @contribution_count = 0
-
+    @section_seq = 0
+    @fragment_seq = 0
+    @para_seq = 0
+    @contribution_seq = 0
+    
     @members = {}
     @questions = []
     @section_members = {}
@@ -26,6 +28,7 @@ class WrittenAnswersParser < Parser
     
     @last_link = ""
     @snippet = []
+    @intro = {:snippets => [], :columns => [], :links => []}
     @subject = ""
     @department = ""
     @start_column = ""
@@ -47,6 +50,9 @@ class WrittenAnswersParser < Parser
         when "a"
           process_links_and_columns(node)
           determine_snippet_type(node)
+        when "h2"
+          @intro[:title] = node.content
+          @intro[:link] = "#{page.url}\##{@last_link}"
         when "h3"
           unless @snippet.empty? or @snippet.join("").length == 0
             store_debate(page)
@@ -63,76 +69,263 @@ class WrittenAnswersParser < Parser
           end
           @segment_link = "#{page.url}\##{@last_link}"
         when "h4"
-          unless @snippet.empty? or @snippet.join("").length == 0
-            store_debate(page)
-            @snippet = []
-            @questions = []
-            @segment_link = ""
-            @members = {}
-          end
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          @subject = sanitize_text(text)
-          @segment_link = "#{page.url}\##{@last_link}"
-        when "p", "table"
-          column_desc = ""
+          
+          if @intro[:title]
+            @intro[:snippets] << text
+            @intro[:columns] << @end_column
+            @intro[:links] << "#{page.url}\##{@last_link}"
+          else          
+            unless @snippet.empty? or @snippet.join("").length == 0
+              store_debate(page)
+              @snippet = []
+              @questions = []
+              @segment_link = ""
+              @members = {}
+            end
+            
+            @subject = sanitize_text(text)
+            @segment_link = "#{page.url}\##{@last_link}"
+            
+            snippet = Snippet.new
+            snippet.text = sanitize_text(text)
+            snippet.column = @end_column
+            @snippet << snippet
+          end
+        when "table"
           if node.xpath("a") and node.xpath("a").length > 0
             @last_link = node.xpath("a").last.attr("name")
           end
           
-          text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
+          snippet = Snippet.new
+          snippet.text = node.to_html
+          snippet.link = "#{page.url}\##{@last_link}"
           
-          if text[text.length-1..text.length] == "]" and text.length > 3
-            question = text[text.rindex("[")+1..text.length-2]
-            @questions << sanitize_text(question)
+          if @member
+            snippet.speaker = @member.printed_name
+          end
+          snippet.column = @end_column
+          snippet.contribution_seq = @contribution_seq
+          @snippet << snippet
+        when "p"
+          column_desc = ""
+          member_name = ""
+          if node.xpath("a") and node.xpath("a").length > 0
+            @last_link = node.xpath("a").last.attr("name")
+          end          
+          unless node.xpath("b").empty?
+            node.xpath("b").each do |bold|
+              if bold.text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/  #older page format
+                if @start_column == ""
+                  @start_column = $1
+                else
+                  @end_column = $1
+                end
+                column_desc = bold.text
+              else 
+                member_name = bold.text.strip
+              end
+            end
+          else
+            member_name = ""
           end
           
+          text = node.text.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
           #ignore column heading text
           unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/
-            @snippet << sanitize_text(text)
+            if text[text.length-1..text.length] == "]" and text.length > 3
+              question = text[text.rindex("[")+1..text.length-2]
+              @questions << sanitize_text(question)
+            end
+            
+            #check if this is a new contrib
+            case member_name
+              when /^(([^\(]*) \(in the Chair\):)/
+                #the Chair
+                name = $2
+                post = "Debate Chair"
+                member = HansardMember.new(name, name, "", "", post)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\):)/
+                #we has a minister
+                post = $2
+                name = $3
+                member = HansardMember.new(name, "", "", "", post)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*) \(([^\(]*)\) \(([^\(]*)\):)/
+                #an MP speaking for the first time in the debate
+                name = $2
+                constituency = $3
+                party = $4
+                member = HansardMember.new(name, "", constituency, party)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              when /^(([^\(]*):)/
+                #an MP who's spoken before
+                name = $2
+                member = HansardMember.new(name, name)
+                handle_contribution(@member, member, page)
+                @contribution.segments << sanitize_text(text.gsub($1, "")).strip
+              else
+                if @member
+                  unless text =~ /^Sitting suspended|^Sitting adjourned|^On resuming|^Question put/ or
+                      text == "#{@member.search_name} rose\342\200\224"
+                    @contribution.segments << sanitize_text(text)
+                  end
+                end
+            end
+            
+            snippet = Snippet.new
+            snippet.text = sanitize_text(text)
+            snippet.link = "#{page.url}\##{@last_link}"
+            if @member
+              if snippet.text =~ /^#{@member.post} \(#{@member.name}\)/
+                snippet.printed_name = "#{@member.post} (#{@member.name})"
+              elsif snippet.text =~ /^#{@member.search_name}/
+                snippet.printed_name = @member.search_name
+              else
+                snippet.printed_name = @member.printed_name
+              end
+              snippet.speaker = @member.printed_name
+            end
+            snippet.column = @end_column
+            snippet.contribution_seq = @contribution_seq
+            @snippet << snippet
           end
       end
     end
     
     def store_debate(page)
-      handle_contribution(@member, @member, page)
-      
-      if @segment_link #no point storing empty pointers
-        segment_id = "#{doc_id}_w_#{@count}"
-        @count += 1
-
-        column_text = ""
-        if @start_column == @end_column or @end_column == ""
-          column_text = @start_column
-        else
-          column_text = "#{@start_column} to #{@end_column}"
-        end
-      
-        doc = {:title => "Written Answer: " + sanitize_text("#{@subject}"),
-         :volume => page.volume,
-         :columns => column_text,
-         :part => sanitize_text(page.part.to_s),
-         :department => @department,
-         :subject => @subject,
-         :url => @segment_link,
-         :house => house,
-         :section => section,
-         :date => Time.parse("#{@date}T00:00:01Z")
-        }
+      if @intro[:title]
+        @fragment_seq += 1
+        intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
+        intro = Intro.find_or_create_by_id(intro_id)
+        @para_seq += 1
+        intro.title = @intro[:title]
+        intro.section = @hansard_section
+        intro.url = @intro[:link]
+        intro.sequence = @fragment_seq
         
-        unless @questions.empty?
-          doc[:questions] = "| " + @questions.join(" | ") + " |"
+        @intro[:snippets].each_with_index do |snippet, i|
+          @para_seq += 1
+          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
+          
+          para = NonContributionPara.find_or_create_by_id(para_id)
+          para.fragment = intro
+          para.text = snippet
+          para.sequence = @para_seq
+          para.url = @intro[:links][i]
+          para.column = @intro[:columns][i]
+          
+          para.save
+          intro.paragraphs << para
         end
+        intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
         
-        categories = {"house" => house, "section" => section}
-      
-        @indexer.add_document(segment_id, doc, @snippet.join(" "))
+        intro.save
+        @hansard_section.fragments << intro
+        @hansard_section.save
 
-        @start_column = @end_column if @end_column != ""
+        @intro = {:snippets => [], :columns => [], :links => []}
+      else
+        handle_contribution(@member, @member, page)
       
-        p @subject
-        p segment_id
-        p @segment_link
-        p ""
+        if @segment_link #no point storing pointers that don't link back to the source
+          @fragment_seq += 1
+          segment_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
+                        
+          column_text = ""
+          if @start_column == @end_column or @end_column == ""
+            column_text = @start_column
+          else
+            column_text = "#{@start_column} to #{@end_column}"
+          end
+        
+          @question = Question.find_or_create_by_id(segment_id)
+          @question.type = "for written answer"
+          @para_seq = 0
+          @hansard_section.fragments << @question
+          @hansard_section.save
+        
+          @hansard.volume = page.volume
+          @hansard.part = sanitize_text(page.part.to_s)
+          @hansard.save
+        
+          @question.section = @hansard_section
+
+          @question.title = @subject
+          @question.department = @department
+          @question.url = @segment_link
+          @question.number = @questions.last
+          
+          @question.sequence = @fragment_seq
+          @question.volume = page.volume
+          @question.house = @hansard.house
+          @question.section_name = @hansard_section.name
+          @question.part = @hansard.part
+          @question.date = @hansard.date
+          
+          search_text = []
+          
+          @snippet.each do |snippet|
+            unless snippet.text == @question.title or snippet.text == ""
+              @para_seq += 1
+              para_id = "#{@question.id}_p#{@para_seq.to_s.rjust(6, "0")}"
+              
+              case snippet.desc
+                when "timestamp"
+                  para = Timestamp.find_or_create_by_id(para_id)
+                  para.text = snippet.text
+                else
+                  if snippet.speaker.nil?
+                    para = NonContributionPara.find_or_create_by_id(para_id)
+                    para.text = snippet.text
+                  elsif snippet.text.strip[0..5] == "<table"
+                    para = ContributionTable.find_or_create_by_id(para_id)
+                    para.member = snippet.speaker
+                    para.contribution_id = "#{@question.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
+                    para.html = snippet.text.strip
+                    
+                    table = Nokogiri::HTML(snippet.text)
+                    para.text = table.content
+                  else
+                    para = ContributionPara.find_or_create_by_id(para_id)
+                    para.member = snippet.speaker
+                    para.contribution_id = "#{@question.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
+                    if snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                      para.speaker_printed_name = snippet.printed_name
+                    end
+                    para.text = snippet.text
+                  end
+              end
+              
+              search_text << para.text
+              para.url = snippet.link
+              para.column = snippet.column
+              para.sequence = @para_seq
+              para.fragment = @question
+              para.save
+              
+              @question.search_text = search_text.join(" ")
+              
+              @question.paragraphs << para
+            end
+          end
+          
+          @question.columns = @question.paragraphs.collect{|x| x.column}.uniq
+          col_paras = @question.paragraphs.dup
+          col_paras.delete_if{|x| x.respond_to?("member") == false }
+          @question.members = col_paras.collect{|x| x.member}.uniq
+          @question.save
+          @start_column = @end_column if @end_column != ""
+      
+          p @subject
+          p segment_id
+          p @segment_link
+          p ""
+        end
       end
     end
     
