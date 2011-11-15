@@ -29,11 +29,13 @@ class Parser
     @fragment = nil
     @element = nil
     @current_speaker = ""
+    @start_url = ""
   end
   
   def get_section_index(section)
     url = get_section_links[section]
     if url
+      @start_url = url
       response = RestClient.get(url)
       return response.body
     end
@@ -102,6 +104,7 @@ class Parser
       end
       
       @hansard_section = Section.find_or_create_by_id(section_id)
+      @hansard_section.url = @start_url
       @fragment_seq = 0
       @hansard_section.hansard = @hansard
       unless @hansard_section.sequence == @section_seq

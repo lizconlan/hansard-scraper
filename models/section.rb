@@ -25,6 +25,7 @@ class Section
   key :fragment_ids, Array
   key :name, String
   key :sequence, Integer
+  key :url, String
   
   def contributions_by_member(member_name)
     contribs = []
