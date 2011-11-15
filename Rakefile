@@ -5,12 +5,13 @@ require 'bundler'
 Bundler.setup
 
 require 'mongo_mapper'
+require 'time'
 
 #parser libraries
 require 'lib/parsers/commons/wh_debates_parser'
+require 'lib/parsers/commons/wms_parser'
+require 'lib/parsers/commons/written_answers_parser'
 #require 'lib/parsers/commons/debates_parser'
-#require 'lib/parsers/commons/wms_parser'
-#require 'lib/parsers/commons/written_answers_parser'
 
 #indexer
 require 'lib/indexer'
@@ -24,7 +25,7 @@ require 'models/paragraph'
 #non-persisted models
 require 'models/hansard_member'
 require 'models/hansard_page'
-require 'models/hansard_fragment'
+require 'models/snippet'
 
 MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[:mongohq_url]
 
@@ -49,6 +50,12 @@ task :scrape_hansard do
   #great, go
   parser = WHDebatesParser.new(date)
   parser.parse_pages
+  
+  parser = WMSParser.new(date)
+  parser.parse_pages
+  
+  parser = WrittenAnswersParser.new(date)
+  parser.parse_pages
 end
 
 desc "index a day's worth of hansard"
@@ -71,8 +78,37 @@ task :index_hansard do
   hansard = Hansard.find_by_date(date)
   hansard.sections.each do |section|
     section.fragments.each do |fragment|
-      hf = HansardFragment.find(fragment.id)
-      indexer.add_document(hf)
+      if fragment.columns.size > 1
+        columns = "#{fragment.columns.first} to #{fragment.columns.last}"
+      else
+        columns = fragment.columns.first
+      end
+      snippet_hash = {
+        :id => fragment.id,
+        :published_at => Time.parse("#{fragment.date}T00:00:01Z"),
+        :search_text => fragment.search_text,
+        :subject => fragment.title,
+        :volume => fragment.volume,
+        :part => fragment.part,
+        :columns => columns,
+        :url => fragment.url,
+        :house => fragment.house,
+        :section => fragment.section_name
+      }
+      if fragment.respond_to?("members")
+        snippet_hash[:members] = fragment.members
+      end
+      if fragment.respond_to?("chair")
+        snippet_hash[:chair] = fragment.chair
+      end
+      if fragment.respond_to?("number")
+        snippet_hash[:question] = fragment.number
+      end
+      if fragment.respond_to?("department")
+        snippet_hash[:department] = fragment.department
+      end
+      snippet = Snippet.new(snippet_hash)
+      indexer.add_document(snippet)
     end
   end
 end

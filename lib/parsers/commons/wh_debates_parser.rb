@@ -55,7 +55,7 @@ class WHDebatesParser < Parser
             @segment_link = ""
           end
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          snippet = Snippet.new
+          snippet = HansardSnippet.new
           snippet.text = sanitize_text(text)
           snippet.column = @end_column
           @snippet << snippet
@@ -72,7 +72,7 @@ class WHDebatesParser < Parser
             @intro[:links] << "#{page.url}\##{@last_link}"
           end
         when "h5"
-          snippet = Snippet.new
+          snippet = HansardSnippet.new
           snippet.text = node.text
           snippet.desc = "timestamp"
           snippet.column = @end_column
@@ -152,7 +152,7 @@ class WHDebatesParser < Parser
                 end
             end              
               
-            snippet = Snippet.new
+            snippet = HansardSnippet.new
             snippet.text = sanitize_text(text)
             snippet.link = "#{page.url}\##{@last_link}"
             if @member

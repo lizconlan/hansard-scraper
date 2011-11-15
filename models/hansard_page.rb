@@ -40,6 +40,6 @@ class HansardPage
     end
 end
 
-class Snippet
+class HansardSnippet
   attr_accessor :text, :speaker, :column, :desc, :contribution_seq, :printed_name, :link
 end

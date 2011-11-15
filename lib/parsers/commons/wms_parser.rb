@@ -78,7 +78,7 @@ class WMSParser < Parser
             @subject = sanitize_text(text)
             @segment_link = "#{page.url}\##{@last_link}"
             
-            snippet = Snippet.new
+            snippet = HansardSnippet.new
             snippet.text = sanitize_text(text)
             snippet.column = @end_column
             @snippet << snippet
@@ -88,7 +88,7 @@ class WMSParser < Parser
             @last_link = node.xpath("a").last.attr("name")
           end
           
-          snippet = Snippet.new
+          snippet = HansardSnippet.new
           snippet.text = node.to_html
           snippet.link = "#{page.url}\##{@last_link}"
           
@@ -163,7 +163,7 @@ class WMSParser < Parser
                 end
             end
             
-            snippet = Snippet.new
+            snippet = HansardSnippet.new
             snippet.text = sanitize_text(text)
             snippet.link = "#{page.url}\##{@last_link}"
             if @member
