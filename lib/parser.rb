@@ -32,6 +32,28 @@ class Parser
     @start_url = ""
   end
   
+  def init_vars
+    @page = 0
+    @section_seq = 0
+    @fragment_seq = 0
+    @para_seq = 0
+    @contribution_seq = 0
+
+    @members = {}
+    @section_members = {}
+    @member = nil
+    @contribution = nil
+    
+    @last_link = ""
+    @snippet = []
+    @intro = {:snippets => [], :columns => [], :links => []}
+    @subject = ""
+    @start_column = ""
+    @end_column = ""
+    @chair = ""
+    @department = ""
+  end
+  
   def get_section_index(section)
     url = get_section_links[section]
     if url

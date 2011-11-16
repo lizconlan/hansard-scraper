@@ -12,31 +12,7 @@ class WrittenAnswersParser < Parser
   def get_section_index
     super(section)
   end
-  
-  def init_vars
-    @page = 0
-    @section_seq = 0
-    @fragment_seq = 0
-    @para_seq = 0
-    @contribution_seq = 0
     
-    @members = {}
-    @questions = []
-    @section_members = {}
-    @member = nil
-    @contribution = nil
-    
-    @last_link = ""
-    @snippet = []
-    @intro = {:snippets => [], :columns => [], :links => []}
-    @subject = ""
-    @department = ""
-    @start_column = ""
-    @end_column = ""
-    
-    @chair = ""
-  end
-  
   def reset_vars
     @snippet = []
     @questions = []
