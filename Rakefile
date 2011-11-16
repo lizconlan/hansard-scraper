@@ -8,10 +8,11 @@ require 'mongo_mapper'
 require 'time'
 
 #parser libraries
+require 'lib/parsers/commons/debates_parser'
 require 'lib/parsers/commons/wh_debates_parser'
 require 'lib/parsers/commons/wms_parser'
 require 'lib/parsers/commons/written_answers_parser'
-#require 'lib/parsers/commons/debates_parser'
+
 
 #indexer
 require 'lib/indexer'
@@ -48,14 +49,21 @@ task :scrape_hansard do
   Date.parse(date)
 
   #great, go
-  parser = WHDebatesParser.new(date)
+  parser = DebatesParser.new(date)
   parser.parse_pages
   
-  parser = WMSParser.new(date)
-  parser.parse_pages
-  
-  parser = WrittenAnswersParser.new(date)
-  parser.parse_pages
+  # parser = WHDebatesParser.new(date)
+  # parser.parse_pages
+  # 
+  # parser = WMSParser.new(date)
+  # parser.parse_pages
+  # 
+  # # TODO: Petitions
+  # 
+  # parser = WrittenAnswersParser.new(date)
+  # parser.parse_pages
+  # 
+  # # TODO: Ministerial Corrections
 end
 
 desc "index a day's worth of hansard"
