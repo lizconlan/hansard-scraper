@@ -6,7 +6,7 @@ class DebatesParser < Parser
   def initialize(date, house="Commons", section="Debates and Oral Answers")
     super(date, house)
     @section = section
-    @section_prefix = ""
+    @section_prefix = "d"
   end
   
   def get_section_index
@@ -150,9 +150,9 @@ class DebatesParser < Parser
               @intro[:snippets] << text
               @intro[:columns] << @end_column
               @intro[:links] << "#{page.url}\##{@last_link}"
-            elsif text.downcase == "backbench business"
+            elsif text.downcase =~ /^back\s?bench business$/
               #treat as honourary h3
-              unless @snippet.empty?
+              if (@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title]
                 store_debate(page)
                 @snippet = []
                 @segment_link = ""
@@ -160,7 +160,8 @@ class DebatesParser < Parser
                 @petitions = []
                 @section_members = {}
               end
-              @subsection = "Debate"
+              @intro[:title] = text
+              @subsection = ""
             else              
               snippet = HansardSnippet.new
               snippet.text = sanitize_text(text)
@@ -179,7 +180,7 @@ class DebatesParser < Parser
           snippet.column = @end_column
           snippet.link = "#{page.url}\##{@last_link}"
           @snippet << snippet
-        when "p"
+        when "p", "center"
           column_desc = ""
           member_name = ""
           
@@ -234,6 +235,7 @@ class DebatesParser < Parser
           end
           
           text = node.content.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
+          
           if @snippet_type == "question"
             if text =~ /^((?:T|Q)\d+)\.\s\[([^\]]*)\] /
               qno = $1
@@ -265,7 +267,7 @@ class DebatesParser < Parser
           end
           
           #ignore column heading text
-          unless text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/
+          unless (text =~ /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/) or text == ""
             #check if this is a new contrib
             case member_name
               when /^(([^\(]*) \(in the Chair\):)/
@@ -305,15 +307,21 @@ class DebatesParser < Parser
                 end
             end
             
-            snippet = HansardSnippet.new
-            if @member
-              snippet.speaker = @member.index_name
-              snippet.printed_name = @member.printed_name
+            if @intro[:title]
+              @intro[:snippets] << text
+              @intro[:columns] << @end_column
+              @intro[:links] << "#{page.url}\##{@last_link}"
+            else
+              snippet = HansardSnippet.new
+              if @member
+                snippet.speaker = @member.index_name
+                snippet.printed_name = @member.printed_name
+              end
+              snippet.text = sanitize_text(text)
+              snippet.column = @end_column
+              @snippet << snippet
+              @segment_link = "#{page.url}\##{@last_link}"
             end
-            snippet.text = sanitize_text(text)
-            snippet.column = @end_column
-            @snippet << snippet
-            @segment_link = "#{page.url}\##{@last_link}"
           end
         when "div"
          #if node.attr("class").value.to_s == "navLinks"
@@ -332,7 +340,6 @@ class DebatesParser < Parser
         @fragment_seq += 1
         intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
         intro = Intro.find_or_create_by_id(intro_id)
-        @para_seq += 1
         intro.title = @intro[:title]
         intro.section = @hansard_section
         intro.url = @intro[:link]

@@ -116,7 +116,8 @@ class Parser
   def parse_pages
     init_vars()
     
-    unless link_to_first_page
+    first_page = link_to_first_page
+    unless first_page
       warn "No #{section} data available for this date"
     else
       if @section_prefix == ""
@@ -139,15 +140,15 @@ class Parser
       @hansard_section.name = @section
       @hansard_section.save
       
-      page = HansardPage.new(link_to_first_page)
+      page = HansardPage.new(first_page)
       parse_page(page)
       while page.next_url
         page = HansardPage.new(page.next_url)
         parse_page(page)
       end
-    
+      
       #flush the buffer
-      unless @snippet.empty?
+      if @snippet.empty? == false or @intro[:title]
         store_debate(page)
         reset_vars()
       end

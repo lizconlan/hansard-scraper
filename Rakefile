@@ -1,8 +1,10 @@
-require 'rake'
-
 require 'rubygems'
+
 require 'bundler'
 Bundler.setup
+
+require 'rake'
+require 'rake/testtask'
 
 require 'mongo_mapper'
 require 'time'
@@ -119,4 +121,9 @@ task :index_hansard do
       indexer.add_document(snippet)
     end
   end
+end
+
+Rake::TestTask.new do |t|
+  t.libs << "test"
+  t.test_files = FileList['test/*_test.rb']
 end

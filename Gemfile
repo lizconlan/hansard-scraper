@@ -7,6 +7,7 @@ gem 'bson_ext', '1.4.0'
 gem 'nokogiri', '1.4.1'
 gem 'json', '1.5.1'
 gem 'haml'
+gem 'rake'
 
 gem 'sinatra'
 
@@ -18,5 +19,6 @@ group :development do
 end
 
 group :test do
-  gem 'rspec'
+  gem 'mocha'
+  gem 'shoulda'
 end
