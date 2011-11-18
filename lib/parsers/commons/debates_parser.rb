@@ -61,8 +61,8 @@ class DebatesParser < Parser
           end
         when "h3"
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          if @snippet_type == "department heading" and @subsection == "Oral Answer"
-            unless @snippet.empty?
+          if (@snippet_type == "department heading" and @subsection == "Oral Answer") or  
+            if (@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title]
               store_debate(page)
               @snippet = []
               @segment_link = ""
@@ -102,7 +102,7 @@ class DebatesParser < Parser
               @intro[:columns] << @end_column
               @intro[:links] << "#{page.url}\##{@last_link}"
             else
-              unless @snippet.empty?
+              if (@snippet.empty? == false) or @intro[:title]
                 store_debate(page)
                 @snippet = []
                 @segment_link = ""
@@ -347,7 +347,7 @@ class DebatesParser < Parser
 
         @intro[:snippets].each_with_index do |snippet, i|
           @para_seq += 1
-          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
+          para_id = "#{intro.id}_p#{@para_seq.to_s.rjust(6, "0")}"
 
           para = NonContributionPara.find_or_create_by_id(para_id)
           para.fragment = intro
@@ -369,7 +369,7 @@ class DebatesParser < Parser
       else
         unless @snippet.empty?
           handle_contribution(@member, @member, page)
-
+          
           if @segment_link #no point storing pointers that don't link back to the source
             @fragment_seq += 1
             segment_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"

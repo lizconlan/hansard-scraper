@@ -235,8 +235,11 @@ class Parser
     end
     
     def sanitize_text(text)
+      text = text.gsub("\342\200\176", "'")
+      text = text.gsub("\342\200\177", "'")
       text = text.gsub("\342\200\230", "'")
       text = text.gsub("\342\200\231", "'")
+      text = text.gsub("\342\200\233", "'")
       text = text.gsub("\342\200\234", '"')
       text = text.gsub("\342\200\235", '"')
       text = text.gsub("\342\200\224", " - ")
