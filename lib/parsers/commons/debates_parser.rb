@@ -386,7 +386,6 @@ class DebatesParser < Parser
               @debate.number = @questions.last
             else
               @debate = Debate.find_or_create_by_id(segment_id)
-              @debate.chair = @chair
             end
           
             @para_seq = 0
