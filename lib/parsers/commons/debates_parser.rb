@@ -1,7 +1,7 @@
 require 'lib/parser'
 
 class DebatesParser < Parser
-  attr_reader :section
+  attr_reader :section, :section_prefix
   
   def initialize(date, house="Commons", section="Debates and Oral Answers")
     super(date, house)
