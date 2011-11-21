@@ -8,7 +8,7 @@ require 'models/hansard'
 require 'models/section'
 require 'models/fragment'
 require 'models/paragraph'
-require 'models/hansard_fragment'
+require 'models/snippet'
 
 before do
   Sunspot.config.solr.url = ENV['WEBSOLR_URL'] || YAML::load(File.read("config/websolr.yml"))[:websolr_url]
