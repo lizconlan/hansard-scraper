@@ -1,4 +1,5 @@
 require 'mongo_mapper'
+require 'htmlentities'
 
 class Fragment
   include MongoMapper::Document
@@ -43,6 +44,8 @@ class Fragment
   def to_simple_html
     html = []
     prev_element = ""
+    coder = HTMLEntities.new
+    
     paragraphs.each do |para|
       case para._type
         when "Timestamp"
@@ -66,26 +69,29 @@ class Fragment
               html << para.html
             end
             prev_element = "table"
-          elsif (para.text.strip[0..0].to_i.to_s != para.text.strip[0..0]) and 
-             (para.text.strip[0..0].downcase == para.text.strip[0..0]) and
-             (para.text.strip[0..0] != '"')
-            prev = html.pop
-            prev.gsub!("</p>","")
-            prev = "#{prev} #{para.text}</p>".squeeze(" ")
-            html << prev
-            prev_element = "para"
+          # elsif (para.text.strip[0..0].to_i.to_s != para.text.strip[0..0]) and 
+          #              (para.text.strip[0..0].downcase == para.text.strip[0..0]) and
+          #              (para.text.strip[0..0] != '"') and
+          #              (para.text.strip[0..0] != '[')
+          #             prev = html.pop
+          #             prev.gsub!("</p>","")
+          #             prev = "#{prev} #{para.text}</p>".squeeze(" ")
+          #             html << prev
+          #             prev_element = "para"
           else
             if para._type == "ContributionPara" and para.speaker_printed_name and para.text.strip =~ /^#{para.speaker_printed_name.gsub('(','\(').gsub(')','\)')}/
-              html << "<p><b>#{para.speaker_printed_name}</b>#{para.text[para.speaker_printed_name.length..para.text.length]}"
+              html << "<p><b>#{coder.encode(para.speaker_printed_name, :named)}</b>#{coder.encode(para.text[para.speaker_printed_name.length..para.text.length], :named)}"
             else
-              html << "<p>#{para.text}</p>"
+              html << "<p>#{coder.encode(para.text, :named)}</p>"
             end
             prev_element = "para"
           end
       end
     end
+    
     html = html.join("<p>&nbsp;</p>")
-    "#{url}<h1>#{title}</h1> #{html}"
+    
+    "#{url}<h2>#{title}</h2><p>&nbsp;</p>#{html}"
   end
 end
 

@@ -8,6 +8,7 @@ gem 'nokogiri', '1.4.1'
 gem 'json', '1.5.1'
 gem 'haml'
 gem 'rake'
+gem 'htmlentities', '4.2.2'
 
 gem 'sinatra'
 
