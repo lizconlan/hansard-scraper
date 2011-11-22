@@ -22,4 +22,5 @@ end
 group :test do
   gem 'mocha'
   gem 'shoulda'
+  gem 'rcov'
 end

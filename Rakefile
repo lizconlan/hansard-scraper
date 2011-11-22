@@ -8,6 +8,7 @@ require 'rake/testtask'
 
 require 'mongo_mapper'
 require 'time'
+require 'rcov'
 
 #parser libraries
 require 'lib/parsers/commons/debates_parser'
@@ -34,7 +35,7 @@ MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[:mon
 
 env = {}
 MongoMapper.config = { env => {'uri' => MONGO_URL} }
-MongoMapper.connect(env)
+#MongoMapper.connect(env)
 
 desc "scrape a day's worth of hansard"
 task :scrape_hansard do
@@ -51,14 +52,14 @@ task :scrape_hansard do
   Date.parse(date)
 
   #great, go
-  parser = DebatesParser.new(date)
-  parser.parse_pages
+  # parser = DebatesParser.new(date)
+  # parser.parse_pages
   
   # parser = WHDebatesParser.new(date)
   # parser.parse_pages
   # 
-  # parser = WMSParser.new(date)
-  # parser.parse_pages
+  parser = WMSParser.new(date)
+  parser.parse_pages
   # 
   # # TODO: Petitions
   # 
@@ -126,4 +127,15 @@ end
 Rake::TestTask.new do |t|
   t.libs << "test"
   t.test_files = FileList['test/*_test.rb']
+end
+
+namespace :test do
+  desc "rcov"
+  task :rcov do
+    rm_f "coverage"
+    rm_f "coverage.data"
+    rcov = "rcov --rails --aggregate coverage.data -Ilib \
+                     --text-summary -x 'bundler/*,gems/*'"
+    system("#{rcov} --html */*_test.rb")
+  end
 end

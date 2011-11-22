@@ -3,3 +3,5 @@
 config/*.yml
 .sass-cache/
 *.bbprojectd/
+coverage/
+coverage.data
