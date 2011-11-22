@@ -14,7 +14,7 @@ class DebatesParserTest < Test::Unit::TestCase
     Section.any_instance.stubs(:save)
     Hansard.any_instance.stubs(:save)
     Debate.any_instance.stubs(:save)
-    # Question.any_instance.stubs(:save)
+    Question.any_instance.stubs(:save)
   end
   
   def stub_hansard
@@ -28,6 +28,49 @@ class DebatesParserTest < Test::Unit::TestCase
     @page.expects(:next_url).returns(nil)
     @page.expects(:doc).returns(Nokogiri::HTML(html))
     @page.expects(:url).at_least_once.returns(@url)
+  end
+  
+  context "in general" do
+    setup do
+      @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
+      stub_saves
+      stub_hansard
+      
+      @parser = DebatesParser.new("2099-01-01")
+      @parser.expects(:section_prefix).returns("d")
+      @parser.expects(:link_to_first_page).returns(@url)
+    end
+    
+    should "pick out the timestamps" do
+      stub_page("test/data/backbench_business_excerpt.html")
+      HansardPage.expects(:new).returns(@page)
+      @page.expects(:volume).at_least_once.returns('531')
+      @page.expects(:part).at_least_once.returns('190')
+      
+      Section.stubs(:find_or_create_by_id).returns(Section.new)
+      Fragment.stubs(:find_or_create_by_id).returns(Fragment.new)
+      Intro.stubs(:find_or_create_by_id).returns(Intro.new)
+      Intro.any_instance.stubs(:paragraphs).returns([])
+      
+      paragraph = Paragraph.new
+      paragraph.stubs(:member=)
+      paragraph.stubs(:member).returns("test")
+      Paragraph.stubs(:find_or_create_by_id).returns(paragraph)
+      
+      NonContributionPara.stubs(:find_or_create_by_id).returns(NonContributionPara.new)
+      ContributionPara.stubs(:find_or_create_by_id).returns(ContributionPara.new)
+      
+      debate = Debate.new
+      Debate.expects(:find_or_create_by_id).at_least_once.returns(debate)
+      debate.expects(:paragraphs).at_least_once.returns([paragraph])
+      
+      timestamp = Timestamp.new()
+      Timestamp.expects(:find_or_create_by_id).at_least_once.returns(timestamp)
+      timestamp.expects(:text=).with("2.44 pm")
+      timestamp.expects(:text=).with("2.45 pm")
+      
+      @parser.parse_pages
+    end
   end
     
   context "when handling Backbench Business section" do
@@ -142,4 +185,5 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
   end
+
 end
