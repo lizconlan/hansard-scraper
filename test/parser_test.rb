@@ -88,13 +88,20 @@ class ParserTest < Test::Unit::TestCase
       @hansard_page = HansardPage.new(url)
       page_html = %Q|<html><head>
         <meta name="Subject" content="House of Commons Hansard, Volume: 523, Part: 121">
-        <meta name="Columns" content="Columns: 91WS to 96WS"></head>
+        <meta name="Columns" content="Columns: 91WS to 96WS">
+        <title>House of Commons Hansard Ministerial Statements for 17 Feb 2011  (pt 0001)</title></head>
         <body><div id="maincontent1"><div>content goes here</div></div></body></html>|
       
       @hansard_page.expects(:doc).times(2).returns(Nokogiri::HTML(page_html))      
       @parser.expects(:parse_node)
 
       @parser.parse_page(@hansard_page)
+      
+      assert('523', @hansard_page.volume)
+      assert('121', @hansard_page.part)
+      assert('91WS', @hansard_page.start_column)
+      assert('96WS', @hansard_page.end_column)
+      assert('House of Commons Hansard Ministerial Statements for 17 Feb 2011  (pt 0001)', @hansard_page.title)
     end
   end
   
