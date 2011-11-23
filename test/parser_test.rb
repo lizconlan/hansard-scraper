@@ -142,5 +142,18 @@ class ParserTest < Test::Unit::TestCase
 
       @parser.parse_page(@hansard_page)
     end
+    
+    context "when no data is found" do
+      should "report that no section data is found" do
+        hansard = Hansard.new
+        Hansard.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(hansard)
+        @parser = WMSParser.new("2099-01-01")
+        @parser.expects(:link_to_first_page).returns(nil)
+        $stderr.expects(:write).with("No Written Ministerial Statements data available for this date")
+        $stderr.expects(:write).with("\n")
+        
+        @parser.parse_pages
+      end
+    end
   end
 end
