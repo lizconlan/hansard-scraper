@@ -401,13 +401,6 @@ class DebatesParser < Parser
             @debate.url = @segment_link
 
             @debate.sequence = @fragment_seq
-            @debate.volume = page.volume
-            @debate.house = @hansard.house
-            @debate.section_name = @hansard_section.name
-            @debate.part = @hansard.part
-            @debate.date = @hansard.date
-
-            search_text = []
 
             @snippet.each do |snippet|
               unless snippet.text == @debate.title or snippet.text == ""
@@ -435,14 +428,11 @@ class DebatesParser < Parser
                 @debate.members = col_paras.collect{|x| x.member}.uniq
 
                 para.text = snippet.text
-                search_text << snippet.text
                 para.url = snippet.link
                 para.column = snippet.column
                 para.sequence = @para_seq
                 para.fragment = @debate
                 para.save
-
-                @debate.search_text = search_text.join(" ")
 
                 @debate.paragraphs << para
               end

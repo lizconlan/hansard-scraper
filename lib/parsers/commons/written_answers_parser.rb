@@ -237,13 +237,6 @@ class WrittenAnswersParser < Parser
           @question.number = @questions.last
           
           @question.sequence = @fragment_seq
-          @question.volume = page.volume
-          @question.house = @hansard.house
-          @question.section_name = @hansard_section.name
-          @question.part = @hansard.part
-          @question.date = @hansard.date
-          
-          search_text = []
           
           @snippet.each do |snippet|
             unless snippet.text == @question.title or snippet.text == ""
@@ -283,8 +276,6 @@ class WrittenAnswersParser < Parser
               para.sequence = @para_seq
               para.fragment = @question
               para.save
-              
-              @question.search_text = search_text.join(" ")
               
               @question.paragraphs << para
             end

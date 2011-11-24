@@ -14,12 +14,8 @@ class Fragment
   key :paragraph_ids, Array
   key :columns, Array
   key :sequence, Integer
-  key :volume, String
-  key :house, String
-  key :part, String
-  key :section_name, String
-  key :date, String
-  key :search_text, String
+  key :k_html, String
+  key :k_fragment_id, String
     
   def contributions_by_member(member_name)
     contribs = []

@@ -222,13 +222,6 @@ class WMSParser < Parser
           @statement.url = @segment_link
           
           @statement.sequence = @fragment_seq
-          @statement.volume = page.volume
-          @statement.house = @hansard.house
-          @statement.section_name = @hansard_section.name
-          @statement.part = @hansard.part
-          @statement.date = @hansard.date
-          
-          search_text = []
           
           @snippet.each do |snippet|
             unless snippet.text == @statement.title or snippet.text == ""
@@ -268,8 +261,6 @@ class WMSParser < Parser
               para.sequence = @para_seq
               para.fragment = @statement
               para.save
-              
-              @statement.search_text = search_text.join(" ")
               
               @statement.paragraphs << para
             end

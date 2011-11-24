@@ -155,7 +155,6 @@ class WHDebatesParser < Parser
         @fragment_seq += 1
         intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
         intro = Intro.find_or_create_by_id(intro_id)
-        @para_seq += 1
         intro.title = @intro[:title]
         intro.section = @hansard_section
         intro.url = @intro[:link]
@@ -163,7 +162,7 @@ class WHDebatesParser < Parser
         
         @intro[:snippets].each_with_index do |snippet, i|
           @para_seq += 1
-          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
+          para_id = "#{intro.id}_p#{@para_seq.to_s.rjust(6, "0")}"
           
           para = NonContributionPara.find_or_create_by_id(para_id)
           para.fragment = intro
@@ -216,13 +215,6 @@ class WHDebatesParser < Parser
           @debate.url = @segment_link
           
           @debate.sequence = @fragment_seq
-          @debate.volume = page.volume
-          @debate.house = @hansard.house
-          @debate.section_name = @hansard_section.name
-          @debate.part = @hansard.part
-          @debate.date = @hansard.date
-          
-          search_text = []
           
           @snippet.each do |snippet|
             unless snippet.text == @debate.title or snippet.text == ""
@@ -246,14 +238,11 @@ class WHDebatesParser < Parser
               end
               
               para.text = snippet.text
-              search_text << snippet.text
               para.url = snippet.link
               para.column = snippet.column
               para.sequence = @para_seq
               para.fragment = @debate
               para.save
-              
-              @debate.search_text = search_text.join(" ")
               
               @debate.paragraphs << para
             end
