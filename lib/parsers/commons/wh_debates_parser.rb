@@ -1,4 +1,5 @@
 require 'lib/parser'
+require 'htmlentities'
 
 class WHDebatesParser < Parser
   attr_reader :section, :section_prefix
@@ -7,6 +8,7 @@ class WHDebatesParser < Parser
     super(date, house)
     @section = section
     @section_prefix = "wh"
+    @coder = HTMLEntities.new
   end
   
   def get_section_index
@@ -24,6 +26,7 @@ class WHDebatesParser < Parser
         when "h2"
           @intro[:title] = node.content
           @intro[:link] = "#{page.url}\##{@last_link}"
+          @k_html << "<h1>#{node.content.strip}</h1>"
         when "a"
           process_links_and_columns(node)
         when "h3"
@@ -39,6 +42,7 @@ class WHDebatesParser < Parser
           @snippet << snippet
           @subject = sanitize_text(text)
           @segment_link = "#{page.url}\##{@last_link}"
+          @k_html << "<h3>#{text}</h3>"
         when "h4"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           if text[text.length-13..text.length-2] == "in the Chair"
@@ -49,6 +53,11 @@ class WHDebatesParser < Parser
             @intro[:columns] << @end_column
             @intro[:links] << "#{page.url}\##{@last_link}"
           end
+          if text =~ /^[A-Z][a-z]*day \d{1,2} [A-Z][a-z]* \d{4}$/
+            @k_html << "<h2>#{text}</h2>"
+          else
+            @k_html << "<p>#{text}</p>"
+          end
         when "h5"
           snippet = HansardSnippet.new
           snippet.text = node.text
@@ -56,6 +65,7 @@ class WHDebatesParser < Parser
           snippet.column = @end_column
           snippet.link = "#{page.url}\##{@last_link}"
           @snippet << snippet
+          @k_html << "<div>#{node.text.strip}</div>"
         when "p" 
           column_desc = ""
           member_name = ""
@@ -146,6 +156,15 @@ class WHDebatesParser < Parser
             snippet.column = @end_column
             snippet.contribution_seq = @contribution_seq
             @snippet << snippet
+            
+            unless snippet.text == ""
+              if snippet.printed_name and snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                k_html = "<p><b>#{@coder.encode(snippet.printed_name, :named)}</b>#{@coder.encode(snippet.text.strip[snippet.printed_name.length..snippet.text.strip.length], :named)}</p>"
+                @k_html << k_html.gsub("\t"," ").squeeze(" ")
+              else
+                @k_html << "<p>#{@coder.encode(snippet.text.strip, :named)}</p>"
+              end
+            end
           end
       end
     end
@@ -175,6 +194,7 @@ class WHDebatesParser < Parser
           intro.paragraphs << para
         end
         intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
+        intro.k_html = @k_html.join("<p>&nbsp;</p>")
         
         intro.save
         @hansard_section.fragments << intro
@@ -249,6 +269,7 @@ class WHDebatesParser < Parser
           end
           
           @debate.columns = @debate.paragraphs.collect{|x| x.column}.uniq
+          @debate.k_html = @k_html.join("<p>&nbsp;</p>")
           @debate.save
           @start_column = @end_column if @end_column != ""
       
@@ -258,6 +279,7 @@ class WHDebatesParser < Parser
           p ""
         end
       end
+      @k_html = []
     end
 
 end

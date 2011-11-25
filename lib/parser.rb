@@ -46,6 +46,7 @@ class Parser
     
     @last_link = ""
     @snippet = []
+    @k_html = []
     @intro = {:snippets => [], :columns => [], :links => []}
     @subject = ""
     @start_column = ""
