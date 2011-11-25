@@ -85,8 +85,7 @@ class WHDebatesParserTest < Test::Unit::TestCase
       ncpara.expects(:sequence=).with(1)
       ncpara.expects(:column=).with("183WH")
       
-      # intro.expects(:k_fragment_id=).with("2099-01-01_hansard_c_wh_000001_k000001")
-      # intro.expects(:k_html=).with("<h1>Westminster Hall</h1><p>&nbsp;</p><h2>Tuesday 19 July 2011</h2><p>&nbsp;</p><p>[Jim Dobbin in the Chair]</p><p>&nbsp;</p>")
+      intro.expects(:k_html=).with("<h1>Westminster Hall</h1><p>&nbsp;</p><h2>Tuesday 19 July 2011</h2><p>&nbsp;</p><p>[Jim Dobbin in the Chair]</p>")
       
       timestamp = Timestamp.new
       contribution = ContributionPara.new
@@ -120,8 +119,7 @@ class WHDebatesParserTest < Test::Unit::TestCase
       contribution.expects(:speaker_printed_name=).with("Sarah Teather")
       contribution.expects(:column=).with("184WH")
       
-      debate.expects(:k_fragment_id=).with("2099-01-01_hansard_c_wh_000002_k000001")
-      debate.expects(:k_html=).with("<h1>Westminster Hall</h1><p>&nbsp;</p><h2>Tuesday 19 July 2011</h2><p>&nbsp;</p><p>[Jim Dobbin in the Chair]</p><p>&nbsp;</p><h3>School Food</h3><p>&nbsp;</p><p>Motion made, and Question proposed, That the sitting be now adjourned. - (Miss Chloe Smith.)</p><div>9.30am</div><p><b>Andrew Gwynne</b> (Denton and Reddish) (Lab):  Start of speech</p><p>&nbsp;</p><p>Continuation of speech</p><p>&nbsp;</p><p><b>Sarah Teather</b>: I shall complete this point first. I have only four minutes left and I have barely answered any of the points raised in the debate.</p>")
+      debate.expects(:k_html=).with("<h3>School Food</h3><p>&nbsp;</p><p>Motion made, and Question proposed, That the sitting be now adjourned. - (Miss Chloe Smith.)</p><div>9.30am</div><p><b>Andrew Gwynne</b> (Denton and Reddish) (Lab):  Start of speech</p><p>&nbsp;</p><p>Continuation of speech</p><p>&nbsp;</p><p><b>Sarah Teather</b>: I shall complete this point first. I have only four minutes left and I have barely answered any of the points raised in the debate.</p>")
       
       Timestamp.expects(:find_or_create_by_id).at_least_once.returns(timestamp)
       timestamp.expects(:text=).at_least_once

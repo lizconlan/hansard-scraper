@@ -15,7 +15,6 @@ class Fragment
   key :columns, Array
   key :sequence, Integer
   key :k_html, String
-  key :k_fragment_id, String
     
   def contributions_by_member(member_name)
     contribs = []
