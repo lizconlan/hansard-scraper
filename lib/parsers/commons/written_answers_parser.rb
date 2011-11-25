@@ -1,4 +1,5 @@
 require 'lib/parser'
+require 'htmlentities'
 
 class WrittenAnswersParser < Parser
   attr_reader :section, :section_prefix
@@ -7,6 +8,7 @@ class WrittenAnswersParser < Parser
     super(date, house)
     @section = section
     @section_prefix = "w"
+    @coder = HTMLEntities.new
   end
   
   def get_section_index
@@ -29,6 +31,7 @@ class WrittenAnswersParser < Parser
         when "h2"
           @intro[:title] = node.content
           @intro[:link] = "#{page.url}\##{@last_link}"
+          @k_html << "<h1>#{node.content.strip}</h1>"
         when "h3"
           unless @snippet.empty? or @snippet.join("").length == 0
             store_debate(page)
@@ -40,8 +43,10 @@ class WrittenAnswersParser < Parser
           text = node.text.gsub("\n", "").squeeze(" ").strip
           if @snippet_type == "department heading"
             @department = sanitize_text(text)
+            @k_html << "<h3>#{@department}</h3>"
           else
             @subject = sanitize_text(text)
+            @k_html << "<h4>#{@subject}</h4>"
           end
           @segment_link = "#{page.url}\##{@last_link}"
         when "h4"
@@ -51,6 +56,7 @@ class WrittenAnswersParser < Parser
             @intro[:snippets] << text
             @intro[:columns] << @end_column
             @intro[:links] << "#{page.url}\##{@last_link}"
+            @k_html << "<h2>#{text}</h2>"
           else          
             unless @snippet.empty? or @snippet.join("").length == 0
               store_debate(page)
@@ -169,6 +175,15 @@ class WrittenAnswersParser < Parser
             snippet.column = @end_column
             snippet.contribution_seq = @contribution_seq
             @snippet << snippet
+            
+            unless snippet.text == ""
+              if snippet.printed_name and snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                k_html = "<p><b>#{@coder.encode(snippet.printed_name, :named)}</b>#{@coder.encode(snippet.text.strip[snippet.printed_name.length..snippet.text.strip.length], :named)}</p>"
+                @k_html << k_html.gsub("\t"," ").squeeze(" ")
+              else
+                @k_html << "<p>#{@coder.encode(snippet.text.strip, :named)}</p>"
+              end
+            end
           end
       end
     end
@@ -186,7 +201,7 @@ class WrittenAnswersParser < Parser
         
         @intro[:snippets].each_with_index do |snippet, i|
           @para_seq += 1
-          para_id = "#{intro.id}_e#{@para_seq.to_s.rjust(6, "0")}"
+          para_id = "#{intro.id}_p#{@para_seq.to_s.rjust(6, "0")}"
           
           para = NonContributionPara.find_or_create_by_id(para_id)
           para.fragment = intro
@@ -199,6 +214,7 @@ class WrittenAnswersParser < Parser
           intro.paragraphs << para
         end
         intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
+        intro.k_html = @k_html.join("<p>&nbsp;</p>")
         
         intro.save
         @hansard_section.fragments << intro
@@ -221,6 +237,7 @@ class WrittenAnswersParser < Parser
         
           @question = Question.find_or_create_by_id(segment_id)
           @question.type = "for written answer"
+          @question.k_html = @k_html.join("<p>&nbsp;</p>")
           @para_seq = 0
           @hansard_section.fragments << @question
           @hansard_section.save
@@ -270,7 +287,6 @@ class WrittenAnswersParser < Parser
                   end
               end
               
-              search_text << para.text
               para.url = snippet.link
               para.column = snippet.column
               para.sequence = @para_seq
@@ -294,6 +310,7 @@ class WrittenAnswersParser < Parser
           p ""
         end
       end
+      @k_html = []
     end
     
 end
