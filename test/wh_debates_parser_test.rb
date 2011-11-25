@@ -137,7 +137,6 @@ class WHDebatesParserTest < Test::Unit::TestCase
       
       timestamp = Timestamp.new
       
-
       Timestamp.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_wh_000002_p000002").returns(timestamp)
       timestamp.expects(:text=).with("9.30 am")
       
