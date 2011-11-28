@@ -258,7 +258,7 @@ class Parser
       text = text.gsub("&quot;", '"')
       text = text.gsub("&amp;", "&")
       
-      text.scan(/&lt;([^\s&]*)([^&]*)&gt;/).each do |match|
+      text.scan(/&lt;([^\s&]*)([^&]*)&gt;/).uniq.each do |match|
         text = text.gsub("&lt;#{match[0]}#{match[1]}&gt;", "<#{match[0]}#{match[1]}>")
       end
       text
