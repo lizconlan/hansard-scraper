@@ -45,4 +45,50 @@ class Section
     contribs << contrib unless contrib.empty?
     contribs
   end
+  
+  def k_html_fragments
+    k_fragments = []
+    intro = ""
+    dept = ""
+    question_html = ""
+    sequence = 0
+    count = 0
+    fragments.each do |fragment|
+      count += 1
+      case fragment._type
+        when "Intro"
+          intro = fragment.k_html
+        else
+          if name == "Written Answers"
+            if fragment.department != dept and dept != ""
+              sequence += 1
+              k_fragments << {:title => "Questions: #{dept}", :sequence => sequence, :html => question_html}
+              dept = fragment.department
+              question_html = fragment.k_html
+            else
+              unless intro == ""
+                question_html = "#{intro}<p>&nbsp;</p>#{fragment.k_html}"
+                intro = ""
+              else
+                question_html = "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"
+              end
+              dept = fragment.department
+            end
+            if count == fragments.count
+              sequence += 1
+              k_fragments << {:title => "Questions: #{fragment.department}", :sequence => sequence, :html => "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"}
+            end
+          else
+            sequence += 1
+            if intro == ""
+              k_fragments << {:title => fragment.title, :sequence => sequence, :html => fragment.k_html}
+            else
+              k_fragments << {:title => fragment.title, :sequence => sequence, :html => intro + "<p>&nbsp;</p>" + fragment.k_html}
+              intro = ""
+            end
+          end
+      end
+    end
+    k_fragments.sort_by { |x| x[:sequence] }
+  end
 end
