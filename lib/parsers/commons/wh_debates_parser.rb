@@ -1,5 +1,4 @@
 require 'lib/parser'
-require 'htmlentities'
 
 class WHDebatesParser < Parser
   attr_reader :section, :section_prefix
@@ -8,7 +7,6 @@ class WHDebatesParser < Parser
     super(date, house)
     @section = section
     @section_prefix = "wh"
-    @coder = HTMLEntities.new
   end
   
   def get_section_index
@@ -160,9 +158,9 @@ class WHDebatesParser < Parser
             unless snippet.text == ""
               if snippet.printed_name and snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
                 k_html = "<p><b>#{@coder.encode(snippet.printed_name, :named)}</b>#{@coder.encode(snippet.text.strip[snippet.printed_name.length..snippet.text.strip.length], :named)}</p>"
-                @k_html << k_html.gsub("\t"," ").squeeze(" ")
+                @k_html << html_fix(k_html.gsub("\t"," ").squeeze(" "))
               else
-                @k_html << "<p>#{@coder.encode(snippet.text.strip, :named)}</p>"
+                @k_html << "<p>#{html_fix(@coder.encode(snippet.text.strip, :named))}</p>"
               end
             end
           end

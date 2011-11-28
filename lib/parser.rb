@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'nokogiri'
 require 'rest-client'
+require 'htmlentities'
 require 'date'
 require 'time'
 
@@ -30,6 +31,8 @@ class Parser
     @element = nil
     @current_speaker = ""
     @start_url = ""
+    
+    @coder = HTMLEntities.new
   end
   
   def init_vars
@@ -47,6 +50,7 @@ class Parser
     @last_link = ""
     @snippet = []
     @k_html = []
+    @questions = []
     @intro = {:snippets => [], :columns => [], :links => []}
     @subject = ""
     @start_column = ""
@@ -245,6 +249,18 @@ class Parser
       text = text.gsub("\342\200\235", '"')
       text = text.gsub("\342\200\224", " - ")
       text = text.gsub("\302\243", "£")
+      text
+    end
+    
+    def  html_fix(text)
+      text = text.gsub("\n", " ")
+      text = text.squeeze(" ")
+      text = text.gsub("&quot;", '"')
+      text = text.gsub("&amp;", "&")
+      
+      text.scan(/&lt;([^\s&]*)([^&]*)&gt;/).each do |match|
+        text = text.gsub("&lt;#{match[0]}#{match[1]}&gt;", "<#{match[0]}#{match[1]}>")
+      end
       text
     end
 end

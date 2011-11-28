@@ -34,60 +34,6 @@ class Fragment
     contribs << contrib unless contrib.empty?
     contribs
   end
-
-  
-  def to_simple_html
-    html = []
-    prev_element = ""
-    coder = HTMLEntities.new
-    
-    paragraphs.each do |para|
-      case para._type
-        when "Timestamp"
-          html << "<div>#{para.text}</div>"
-          prev_element = "timestamp"
-        else
-          if (para.text.strip[0..5] == "<table")
-            if prev_element == "table"
-              prev = html.pop
-              
-              old_table = prev.strip[0..prev.strip.rindex("</table")-1]
-              new_table = para.html.strip[para.html.strip.index(">")+1..para.html.length]
-              
-              if old_table.strip[-8..old_table.length] == "</tbody>" and new_table.strip[0..6] == "<tbody>"
-                old_table = old_table.strip[0..old_table.strip.rindex("</tbody")-1]
-                new_table = new_table.strip[7..new_table.length]
-              end
-              
-              html << "#{old_table}#{new_table}"
-            else
-              html << para.html
-            end
-            prev_element = "table"
-          # elsif (para.text.strip[0..0].to_i.to_s != para.text.strip[0..0]) and 
-          #              (para.text.strip[0..0].downcase == para.text.strip[0..0]) and
-          #              (para.text.strip[0..0] != '"') and
-          #              (para.text.strip[0..0] != '[')
-          #             prev = html.pop
-          #             prev.gsub!("</p>","")
-          #             prev = "#{prev} #{para.text}</p>".squeeze(" ")
-          #             html << prev
-          #             prev_element = "para"
-          else
-            if para._type == "ContributionPara" and para.speaker_printed_name and para.text.strip =~ /^#{para.speaker_printed_name.gsub('(','\(').gsub(')','\)')}/
-              html << "<p><b>#{coder.encode(para.speaker_printed_name, :named)}</b>#{coder.encode(para.text[para.speaker_printed_name.length..para.text.length], :named)}"
-            else
-              html << "<p>#{coder.encode(para.text, :named)}</p>"
-            end
-            prev_element = "para"
-          end
-      end
-    end
-    
-    html = html.join("<p>&nbsp;</p>")
-    
-    "#{url}<h2>#{title}</h2><p>&nbsp;</p>#{html}"
-  end
 end
 
 class Debate < Fragment
