@@ -43,10 +43,10 @@ task :scrape_hansard do
 
   #make sure date has been supplied and is valid
   unless date
-    raise 'need to specify date in yyyy-mm-dd format'
+    raise 'need to specify date=yyyy-mm-dd'
   else
     unless date =~ /^\d{4}-\d{2}-\d{2}$/
-      raise 'need to specify date in yyyy-mm-dd format'
+      raise 'need to specify date=yyyy-mm-dd'
     end
   end
   Date.parse(date)
@@ -55,16 +55,16 @@ task :scrape_hansard do
   # parser = DebatesParser.new(date)
   # parser.parse_pages
   # 
-  # parser = WHDebatesParser.new(date)
-  # parser.parse_pages
+  parser = WHDebatesParser.new(date)
+  parser.parse_pages
   # 
   parser = WMSParser.new(date)
   parser.parse_pages
   # 
   # # TODO: Petitions
   # 
-  # parser = WrittenAnswersParser.new(date)
-  # parser.parse_pages
+  parser = WrittenAnswersParser.new(date)
+  parser.parse_pages
   # 
   # # TODO: Ministerial Corrections
 end
@@ -75,10 +75,10 @@ task :index_hansard do
 
   #make sure date has been supplied and is valid
   unless date
-    raise 'need to specify date in yyyy-mm-dd format'
+    raise 'need to specify date=yyyy-mm-dd'
   else
     unless date =~ /^\d{4}-\d{2}-\d{2}$/
-      raise 'need to specify date in yyyy-mm-dd format'
+      raise 'need to specify date=yyyy-mm-dd'
     end
   end
   Date.parse(date)
@@ -96,15 +96,15 @@ task :index_hansard do
       end
       snippet_hash = {
         :id => fragment.id,
-        :published_at => Time.parse("#{fragment.date}T00:00:01Z"),
-        :search_text => fragment.search_text,
+        :published_at => Time.parse("#{hansard.date}T00:00:01Z"),
+        :search_text => fragment.paragraphs.join(' '),
         :subject => fragment.title,
-        :volume => fragment.volume,
-        :part => fragment.part,
+        :volume => hansard.volume,
+        :part => hansard.part,
         :columns => columns,
         :url => fragment.url,
-        :house => fragment.house,
-        :section => fragment.section_name
+        :house => hansard.house,
+        :section => section.name
       }
       if fragment.respond_to?("members")
         snippet_hash[:members] = fragment.members

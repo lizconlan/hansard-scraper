@@ -255,7 +255,6 @@ class WMSParser < Parser
                   end
               end
               
-              search_text << para.text
               para.url = snippet.link
               para.column = snippet.column
               para.sequence = @para_seq
