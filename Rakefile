@@ -97,7 +97,7 @@ task :index_hansard do
       snippet_hash = {
         :id => fragment.id,
         :published_at => Time.parse("#{hansard.date}T00:00:01Z"),
-        :search_text => fragment.paragraphs.join(' '),
+        :search_text => fragment.paragraphs.collect { |x| x.text }.join(' '),
         :subject => fragment.title,
         :volume => hansard.volume,
         :part => hansard.part,
