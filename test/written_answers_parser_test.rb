@@ -105,7 +105,7 @@ class WrittenAnswersParserTest < Test::Unit::TestCase
         Intro.expects(:find_or_create_by_id).returns(intro)
         
         ncpara = NonContributionPara.new
-        NonContributionPara.any_instance.stubs(:pargraphs).returns([])
+        NonContributionPara.any_instance.stubs(:paragraphs).returns([])
         NonContributionPara.stubs(:text=)
         NonContributionPara.expects(:find_or_create_by_id).returns(ncpara)
         
