@@ -59,10 +59,10 @@ class Section
         when "Intro"
           intro = fragment.k_html
         else
-          if name == "Written Answers"
+          if name == "Written Answers" or name == "Written Ministerial Statements"
             if fragment.department != dept and dept != ""
               sequence += 1
-              k_fragments << {:title => "Questions: #{dept}", :sequence => sequence, :html => question_html}
+              k_fragments << {:title => dept, :sequence => sequence, :html => question_html}
               dept = fragment.department
               question_html = fragment.k_html
             else
@@ -76,7 +76,7 @@ class Section
             end
             if count == fragments.count
               sequence += 1
-              k_fragments << {:title => "Questions: #{fragment.department}", :sequence => sequence, :html => "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"}
+              k_fragments << {:title => fragment.department, :sequence => sequence, :html => "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"}
             end
           else
             sequence += 1
