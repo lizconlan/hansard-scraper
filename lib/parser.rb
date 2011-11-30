@@ -135,10 +135,24 @@ class Parser
       @hansard_section.url = @start_url
       @fragment_seq = 0
       @hansard_section.hansard = @hansard
-      unless @hansard_section.sequence == @section_seq
-        @section_seq += 1 
-        @hansard_section.sequence = @section_seq
+      
+      case @section
+        when "Debates and Oral Answers"
+          @hansard_section.sequence = 1
+        when "Westminster Hall"
+          @hansard_section.sequence = 2
+        when "Written Ministerial Statements"
+          @hansard_section.sequence = 3
+        when "Petitions"
+          @hansard_section.sequence = 4
+        when "Written Answers"
+          @hansard_section.sequence = 5
+        when "Ministerial Corrections"
+          @hansard_section.sequence = 6
+        else
+          raise "unrecognised section: #{@section}"
       end
+      
       @hansard.sections << @hansard_section
       @hansard.save
       
