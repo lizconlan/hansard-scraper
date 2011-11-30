@@ -250,9 +250,6 @@ class Parser
       end
     end
     
-    def store_member_contributions
-    end
-    
     def sanitize_text(text)
       text = text.gsub("\342\200\176", "'")
       text = text.gsub("\342\200\177", "'")
