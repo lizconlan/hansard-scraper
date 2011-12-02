@@ -61,30 +61,31 @@ class DebatesParser < Parser
           end
         when "h3"
           text = node.text.gsub("\n", "").squeeze(" ").strip
-          if (@snippet_type == "department heading" and @subsection == "Oral Answer") or  
-            if (@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title]
+          if (@snippet_type == "department heading" and @subsection == "Oral Answer")
+            @department = sanitize_text(text)
+            if text.downcase != "prayers" and ((@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title])
               store_debate(page)
               @snippet = []
               @segment_link = ""
               @questions = []
               @petitions = []
               @section_members = {}
-            end
-            @department = sanitize_text(text)
-            if @intro[:title]
-              @intro[:snippets] << text
-              @intro[:columns] << @end_column
-              @intro[:links] << "#{page.url}\##{@last_link}"
             else
-              snippet = HansardSnippet.new
-              snippet.text = sanitize_text(text)
-              snippet.column = @end_column
-              @snippet << snippet
               @subject = sanitize_text(text)
-              @segment_link = "#{page.url}\##{@last_link}"
+              if @intro[:title]
+                @intro[:snippets] << text
+                @intro[:columns] << @end_column
+                @intro[:links] << "#{page.url}\##{@last_link}"
+              else
+                snippet = HansardSnippet.new
+                snippet.text = sanitize_text(text)
+                snippet.column = @end_column
+                @snippet << snippet
+                @segment_link = "#{page.url}\##{@last_link}"
+              end
             end
-          elsif @snippet_type == "subject heading" and @subsection == "Oral Answer"            
-            if (@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title]
+          elsif @snippet_type == "subject heading" and @subsection == "Oral Answer"
+            if ((@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) and @subject != "") or @intro[:title]
               store_debate(page)
               @snippet = []
               @segment_link = ""
@@ -94,7 +95,6 @@ class DebatesParser < Parser
             end
             
             @subject = text
-            p "my chosen specialist subject is: #{@subject}"
           else
             @subsection = ""
             if text.downcase == "prayers"
@@ -116,6 +116,7 @@ class DebatesParser < Parser
                 when /^business/,
                      "european union documents",
                      "points of order",
+                     "point of order",
                      "royal assent",
                      "bill presented"
                   @subject = text
@@ -142,15 +143,11 @@ class DebatesParser < Parser
         when "h4"
           text = node.text.gsub("\n", "").squeeze(" ").strip
           if @intro[:title]
-            @intro[:snippets] << text
+            @intro[:snippets] << sanitize_text(text)
             @intro[:columns] << @end_column
             @intro[:links] << "#{page.url}\##{@last_link}"
           else
-            if @subject.downcase == "prayers"
-              @intro[:snippets] << text
-              @intro[:columns] << @end_column
-              @intro[:links] << "#{page.url}\##{@last_link}"
-            elsif text.downcase =~ /^back\s?bench business$/
+            if text.downcase =~ /^back\s?bench business$/
               #treat as honourary h3
               if (@snippet.empty? == false and @snippet.collect{|x| x.text}.join("").length > 0) or @intro[:title]
                 store_debate(page)
@@ -167,7 +164,9 @@ class DebatesParser < Parser
               snippet.text = sanitize_text(text)
               snippet.column = @end_column
               @snippet << snippet
-              @subject = sanitize_text(text)
+              unless @subsection == "Oral Answer"
+                @subject = sanitize_text(text)
+              end
               @segment_link = "#{page.url}\##{@last_link}"
             end
           end
@@ -234,13 +233,19 @@ class DebatesParser < Parser
             member_name = ""
           end
           
-          text = node.content.gsub("\n", "").gsub(column_desc, "").squeeze(" ").strip
+          text = node.content.gsub("\n", " ").gsub("\r", "").gsub(column_desc, "").squeeze(" ").strip
           
           if @snippet_type == "question"
             if text =~ /^((?:T|Q)\d+)\.\s\[([^\]]*)\] /
               qno = $1
               question = $2
-              unless @questions.empty?
+              if @questions.empty?
+                if @subject =~ /\- (?:T|Q)\d+/
+                  @subject = "#{@subject.gsub(/\- (?:T|Q)\d+/, "- #{qno}")}"
+                else
+                  @subject = "#{@subject} - #{qno}"
+                end
+              else
                 if @subject =~ /\- (?:T|Q)\d+/
                   @subject = "#{@subject.gsub(/\- (?:T|Q)\d+/, "- #{@question_no}")}"
                 else
@@ -314,11 +319,19 @@ class DebatesParser < Parser
             else
               snippet = HansardSnippet.new
               if @member
-                snippet.speaker = @member.index_name
-                snippet.printed_name = @member.printed_name
+                snippet.speaker = @member.index_name                  
               end
               snippet.text = sanitize_text(text)
               snippet.column = @end_column
+              
+              if snippet.text =~ /^(T?\d+\.\s+(\[\d+\]\s+)?)?#{@member.post} \(#{@member.name}\)/
+                snippet.printed_name = "#{@member.post} (#{@member.name})"
+              elsif snippet.text =~ /^(T?\d+\.\s+(\[\d+\]\s+)?)?#{@member.search_name}/
+                snippet.printed_name = @member.search_name
+              else
+                snippet.printed_name = @member.printed_name
+              end
+              
               @snippet << snippet
               @segment_link = "#{page.url}\##{@last_link}"
             end
@@ -340,6 +353,7 @@ class DebatesParser < Parser
         @fragment_seq += 1
         intro_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
         intro = Intro.find_or_create_by_id(intro_id)
+        @para_seq = 0
         intro.title = @intro[:title]
         intro.section = @hansard_section
         intro.url = @intro[:link]
@@ -384,6 +398,7 @@ class DebatesParser < Parser
             if @subsection == "Oral Answer"
               @debate = Question.find_or_create_by_id(segment_id)
               @debate.number = @questions.last
+              @debate.department = @department
             else
               @debate = Debate.find_or_create_by_id(segment_id)
             end
@@ -417,7 +432,7 @@ class DebatesParser < Parser
                       para = ContributionPara.find_or_create_by_id(para_id)
                       para.member = snippet.speaker
                       para.contribution_id = "#{@debate.id}__#{snippet.contribution_seq.to_s.rjust(6, "0")}"
-                      if snippet.text.strip =~ /^#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                      if snippet.text.strip =~ /^(T?\d+\.\s+(\[\d+\]\s+)?)?#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
                         para.speaker_printed_name = snippet.printed_name
                       end
                     end
