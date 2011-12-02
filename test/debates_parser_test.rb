@@ -31,161 +31,161 @@ class DebatesParserTest < Test::Unit::TestCase
     @page.stubs(:part).returns("190")
   end
   
-  # context "in general" do
-  #   setup do
-  #     @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-  #     stub_saves
-  #     stub_hansard
-  #     
-  #     @parser = DebatesParser.new("2099-01-01")
-  #     @parser.expects(:section_prefix).returns("d")
-  #     @parser.expects(:link_to_first_page).returns(@url)
-  #   end
-  #   
-  #   should "pick out the timestamps" do
-  #     stub_page("test/data/backbench_business_excerpt.html")
-  #     HansardPage.expects(:new).returns(@page)
-  #     @page.expects(:volume).at_least_once.returns('531')
-  #     @page.expects(:part).at_least_once.returns('190')
-  #     
-  #     Section.stubs(:find_or_create_by_id).returns(Section.new)
-  #     Fragment.stubs(:find_or_create_by_id).returns(Fragment.new)
-  #     Intro.stubs(:find_or_create_by_id).returns(Intro.new)
-  #     Intro.any_instance.stubs(:paragraphs).returns([])
-  #     
-  #     paragraph = Paragraph.new
-  #     paragraph.stubs(:member=)
-  #     paragraph.stubs(:member).returns("test")
-  #     Paragraph.stubs(:find_or_create_by_id).returns(paragraph)
-  #     
-  #     NonContributionPara.stubs(:find_or_create_by_id).returns(NonContributionPara.new)
-  #     ContributionPara.stubs(:find_or_create_by_id).returns(ContributionPara.new)
-  #     
-  #     debate = Debate.new
-  #     Debate.expects(:find_or_create_by_id).at_least_once.returns(debate)
-  #     debate.expects(:paragraphs).at_least_once.returns([paragraph])
-  #     
-  #     timestamp = Timestamp.new()
-  #     Timestamp.expects(:find_or_create_by_id).at_least_once.returns(timestamp)
-  #     timestamp.expects(:text=).with("2.44 pm")
-  #     timestamp.expects(:text=).with("2.45 pm")
-  #     
-  #     @parser.parse_pages
-  #   end
-  # end
-  #   
-  # context "when handling Backbench Business section" do
-  #   setup do
-  #     @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-  #     stub_saves
-  #     stub_hansard
-  #     
-  #     @parser = DebatesParser.new("2099-01-01")
-  #     @parser.expects(:section_prefix).returns("d")
-  #     @parser.expects(:link_to_first_page).returns(@url)
-  #   end
-  # 
-  #   should "correctly recognise the Backbench Business section" do
-  #     stub_page("test/data/backbench_business_header.html")
-  #     HansardPage.expects(:new).returns(@page)
-  #     
-  #     section = Section.new
-  #     Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
-  #     
-  #     intro = Intro.new
-  #     Intro.expects(:find_or_create_by_id).returns(intro)
-  #     intro.expects(:title=).with("Backbench Business")
-  #     
-  #     ncpara = NonContributionPara.new
-  #     NonContributionPara.expects(:find_or_create_by_id).returns(ncpara)
-  #     ncpara.expects(:fragment=).with(intro)
-  #     ncpara.expects(:text=).with("[30th Allotted Day]")
-  #     ncpara.expects(:sequence=).with(1)
-  #     ncpara.expects(:url=).with("#{@url}\#11071988000020")
-  #     ncpara.expects(:column=).with("831")
-  #     
-  #     intro.expects(:paragraphs).at_least_once.returns([ncpara])
-  #     
-  #     @parser.parse_pages
-  #   end
-  #   
-  #   should "handle the Intro properly and create Debate elements for each debate" do
-  #     stub_page("test/data/backbench_business_excerpt.html")
-  #     stub_saves
-  #     HansardPage.expects(:new).returns(@page)
-  #     
-  #     section = Section.new
-  #     Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
-  #     section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
-  #     
-  #     ncpara = NonContributionPara.new
-  #     NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000001').returns(ncpara)
-  #     NonContributionPara.any_instance.stubs(:fragment=)
-  #     NonContributionPara.any_instance.stubs(:text=)
-  #     NonContributionPara.any_instance.stubs(:sequence=)
-  #     NonContributionPara.any_instance.stubs(:url=)
-  #     NonContributionPara.any_instance.stubs(:column=)
-  #     
-  #     intro = Intro.new
-  #     Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
-  #     intro.expects(:title=).with('Backbench Business')
-  #     intro.expects(:section=).with(section)
-  #     intro.expects(:url=)
-  #     intro.expects(:sequence=).with(1)
-  #     intro.stubs(:columns=)
-  #     intro.expects(:paragraphs).at_least_once.returns([])
-  #     intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000001')
-  #     
-  #     snippet1 = HansardSnippet.new
-  #     HansardSnippet.expects(:new).at_least_once.returns(snippet1)
-  #     
-  #     snippet1.expects(:text=).with('Summer Adjournment')
-  #     snippet1.expects(:column=).with("831")
-  #     
-  #     debate = Debate.new
-  #     Debate.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(debate)
-  #     debate.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000002')
-  #     debate.expects(:title=).with("Summer Adjournment")
-  #     debate.expects(:paragraphs).at_least_once.returns([])
-  #     
-  #     snippet1.expects(:text=).with('2.44 pm')
-  #     snippet1.expects(:column=).with("831")
-  # 
-  #     snippet1.expects(:text=).with("Natascha Engel (North East Derbyshire) (Lab):I beg to move,")
-  #     snippet1.expects(:column=).with("831")
-  #     
-  #     snippet1.expects(:text=).with("That this House has considered matters to be raised before the forthcoming adjournment.")
-  #     snippet1.expects(:column=).with("831")
-  #     
-  #     snippet1.expects(:text=).with("Thank you for calling me, Mr Deputy Speaker; I thought that this moment would never arrive. A total of 66 Members want to participate in the debate, including our newest Member - my hon. Friend the Member for Inverclyde (Mr McKenzie) - who is hoping to make his maiden speech. [Hon. Members: \"Hear, hear.\"] It is unfortunate therefore that two Government statements, important though they both were, have taken almost two hours out of Back Benchers' time. To set an example of brevity and to prepare us for all the constituency carnivals and fairs at which we will be spending most of our time during the recess, I hereby declare the debate open.")
-  #     snippet1.expects(:column=).with("831")
-  #     
-  #     snippet1.expects(:text=).with("Mr Deputy Speaker (Mr Lindsay Hoyle): We are now coming to a maiden speech, and I remind hon. Members not to intervene on it.")
-  #     snippet1.expects(:column=).with("831")
-  #     
-  #     debate = Debate.new
-  #     Debate.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000003').returns(debate)
-  #     debate.expects(:title=).with('Business, innovation and skills')
-  #     debate.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000003')
-  #     
-  #     snippet1.expects(:text=).with('Business, innovation and skills')
-  #     snippet1.expects(:column=).with("832")
-  #     
-  #     snippet1.expects(:text=).with('2.45 pm')
-  #     snippet1.expects(:column=).with("832")
-  #     
-  #     snippet1.expects(:text=).with('Mr Iain McKenzie (Inverclyde) (Lab): Thank you, Mr Deputy Speaker, for calling me in this debate to make my maiden speech. I regard it as both a privilege and an honour to represent the constituency of Inverclyde. My constituency has been served extremely well by many accomplished individuals; however, I am only the second Member for Inverclyde to have been born in Inverclyde. The first was, of course, David Cairns.')
-  #     snippet1.expects(:column=).with("832")      
-  #     
-  #     snippet1.expects(:text=).with('My two immediate predecessors in my seat, which has often had its boundaries changed, were Dr Norman Godman and the late David Cairns. Dr Godman served in the House for 18 years, and his hard work and enduring commitment to the peace process in Northern Ireland earned him a great deal of respect and admiration. David Cairns was an excellent MP for Inverclyde; his parliamentary career was cut all too short by his sudden death, and I am well aware of the great respect that all parties had for David, as did the people of Inverclyde, as reflected in the large majority he held in the 2010 general election. If I can serve my constituents half as well as David, I shall be doing well indeed.')
-  #     snippet1.expects(:column=).with("832")
-  #     
-  #     @page.expects(:volume).at_least_once.returns('531')
-  #     @page.expects(:part).at_least_once.returns('190')
-  #     
-  #     @parser.parse_pages
-  #   end
-  # end
+  context "in general" do
+    setup do
+      @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
+      stub_saves
+      stub_hansard
+      
+      @parser = DebatesParser.new("2099-01-01")
+      @parser.expects(:section_prefix).returns("d")
+      @parser.expects(:link_to_first_page).returns(@url)
+    end
+    
+    should "pick out the timestamps" do
+      stub_page("test/data/backbench_business_excerpt.html")
+      HansardPage.expects(:new).returns(@page)
+      @page.expects(:volume).at_least_once.returns('531')
+      @page.expects(:part).at_least_once.returns('190')
+      
+      Section.stubs(:find_or_create_by_id).returns(Section.new)
+      Fragment.stubs(:find_or_create_by_id).returns(Fragment.new)
+      Intro.stubs(:find_or_create_by_id).returns(Intro.new)
+      Intro.any_instance.stubs(:paragraphs).returns([])
+      
+      paragraph = Paragraph.new
+      paragraph.stubs(:member=)
+      paragraph.stubs(:member).returns("test")
+      Paragraph.stubs(:find_or_create_by_id).returns(paragraph)
+      
+      NonContributionPara.stubs(:find_or_create_by_id).returns(NonContributionPara.new)
+      ContributionPara.stubs(:find_or_create_by_id).returns(ContributionPara.new)
+      
+      debate = Debate.new
+      Debate.expects(:find_or_create_by_id).at_least_once.returns(debate)
+      debate.expects(:paragraphs).at_least_once.returns([paragraph])
+      
+      timestamp = Timestamp.new()
+      Timestamp.expects(:find_or_create_by_id).at_least_once.returns(timestamp)
+      timestamp.expects(:text=).with("2.44 pm")
+      timestamp.expects(:text=).with("2.45 pm")
+      
+      @parser.parse_pages
+    end
+  end
+    
+  context "when handling Backbench Business section" do
+    setup do
+      @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
+      stub_saves
+      stub_hansard
+      
+      @parser = DebatesParser.new("2099-01-01")
+      @parser.expects(:section_prefix).returns("d")
+      @parser.expects(:link_to_first_page).returns(@url)
+    end
+  
+    should "correctly recognise the Backbench Business section" do
+      stub_page("test/data/backbench_business_header.html")
+      HansardPage.expects(:new).returns(@page)
+      
+      section = Section.new
+      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+      
+      intro = Intro.new
+      Intro.expects(:find_or_create_by_id).returns(intro)
+      intro.expects(:title=).with("Backbench Business")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).returns(ncpara)
+      ncpara.expects(:fragment=).with(intro)
+      ncpara.expects(:text=).with("[30th Allotted Day]")
+      ncpara.expects(:sequence=).with(1)
+      ncpara.expects(:url=).with("#{@url}\#11071988000020")
+      ncpara.expects(:column=).with("831")
+      
+      intro.expects(:paragraphs).at_least_once.returns([ncpara])
+      
+      @parser.parse_pages
+    end
+    
+    should "handle the Intro properly and create Debate elements for each debate" do
+      stub_page("test/data/backbench_business_excerpt.html")
+      stub_saves
+      HansardPage.expects(:new).returns(@page)
+      
+      section = Section.new
+      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+      section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000001').returns(ncpara)
+      NonContributionPara.any_instance.stubs(:fragment=)
+      NonContributionPara.any_instance.stubs(:text=)
+      NonContributionPara.any_instance.stubs(:sequence=)
+      NonContributionPara.any_instance.stubs(:url=)
+      NonContributionPara.any_instance.stubs(:column=)
+      
+      intro = Intro.new
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
+      intro.expects(:title=).with('Backbench Business')
+      intro.expects(:section=).with(section)
+      intro.expects(:url=)
+      intro.expects(:sequence=).with(1)
+      intro.stubs(:columns=)
+      intro.expects(:paragraphs).at_least_once.returns([])
+      intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000001')
+      
+      snippet1 = HansardSnippet.new
+      HansardSnippet.expects(:new).at_least_once.returns(snippet1)
+      
+      snippet1.expects(:text=).with('Summer Adjournment')
+      snippet1.expects(:column=).with("831")
+      
+      debate = Debate.new
+      Debate.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(debate)
+      debate.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000002')
+      debate.expects(:title=).with("Summer Adjournment")
+      debate.expects(:paragraphs).at_least_once.returns([])
+      
+      snippet1.expects(:text=).with('2.44 pm')
+      snippet1.expects(:column=).with("831")
+  
+      snippet1.expects(:text=).with("Natascha Engel (North East Derbyshire) (Lab):I beg to move,")
+      snippet1.expects(:column=).with("831")
+      
+      snippet1.expects(:text=).with("That this House has considered matters to be raised before the forthcoming adjournment.")
+      snippet1.expects(:column=).with("831")
+      
+      snippet1.expects(:text=).with("Thank you for calling me, Mr Deputy Speaker; I thought that this moment would never arrive. A total of 66 Members want to participate in the debate, including our newest Member - my hon. Friend the Member for Inverclyde (Mr McKenzie) - who is hoping to make his maiden speech. [Hon. Members: \"Hear, hear.\"] It is unfortunate therefore that two Government statements, important though they both were, have taken almost two hours out of Back Benchers' time. To set an example of brevity and to prepare us for all the constituency carnivals and fairs at which we will be spending most of our time during the recess, I hereby declare the debate open.")
+      snippet1.expects(:column=).with("831")
+      
+      snippet1.expects(:text=).with("Mr Deputy Speaker (Mr Lindsay Hoyle): We are now coming to a maiden speech, and I remind hon. Members not to intervene on it.")
+      snippet1.expects(:column=).with("831")
+      
+      debate = Debate.new
+      Debate.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000003').returns(debate)
+      debate.expects(:title=).with('Business, innovation and skills')
+      debate.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000003')
+      
+      snippet1.expects(:text=).with('Business, innovation and skills')
+      snippet1.expects(:column=).with("832")
+      
+      snippet1.expects(:text=).with('2.45 pm')
+      snippet1.expects(:column=).with("832")
+      
+      snippet1.expects(:text=).with('Mr Iain McKenzie (Inverclyde) (Lab): Thank you, Mr Deputy Speaker, for calling me in this debate to make my maiden speech. I regard it as both a privilege and an honour to represent the constituency of Inverclyde. My constituency has been served extremely well by many accomplished individuals; however, I am only the second Member for Inverclyde to have been born in Inverclyde. The first was, of course, David Cairns.')
+      snippet1.expects(:column=).with("832")      
+      
+      snippet1.expects(:text=).with('My two immediate predecessors in my seat, which has often had its boundaries changed, were Dr Norman Godman and the late David Cairns. Dr Godman served in the House for 18 years, and his hard work and enduring commitment to the peace process in Northern Ireland earned him a great deal of respect and admiration. David Cairns was an excellent MP for Inverclyde; his parliamentary career was cut all too short by his sudden death, and I am well aware of the great respect that all parties had for David, as did the people of Inverclyde, as reflected in the large majority he held in the 2010 general election. If I can serve my constituents half as well as David, I shall be doing well indeed.')
+      snippet1.expects(:column=).with("832")
+      
+      @page.expects(:volume).at_least_once.returns('531')
+      @page.expects(:part).at_least_once.returns('190')
+      
+      @parser.parse_pages
+    end
+  end
 
   context "when handling the Oral Answers section" do
     setup do
@@ -198,160 +198,160 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.expects(:link_to_first_page).returns(@url)
     end
     
-    # should "find and deal with the main heading and both intros" do
-    #   stub_page("test/data/debates_and_oral_answers_header.html")
-    #   stub_saves
-    #   HansardPage.expects(:new).returns(@page)
-    #   
-    #   section = Section.new
-    #   Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
-    #   section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
-    #   
-    #   intro = Intro.new
-    #   Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
-    #   intro.expects(:title=).with('House of Commons')
-    #   intro.expects(:section=).with(section)
-    #   intro.expects(:url=).with("#{@url}\#11071988000007")
-    #   intro.expects(:sequence=).with(1)
-    #   intro.stubs(:columns=)
-    #   intro.expects(:paragraphs).at_least_once.returns([])
-    #   intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000001')
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000001').returns(ncpara)
-    #   ncpara.expects(:text=).with("Tuesday 19 July 2011")
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000002').returns(ncpara)
-    #   ncpara.expects(:text=).with("The House met at half-past Eleven o'clock")
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000003').returns(ncpara)
-    #   ncpara.expects(:text=).with("Prayers")
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000004').returns(ncpara)
-    #   ncpara.expects(:text=).with("[Mr Speaker in the Chair]")
-    #   
-    #   intro = Intro.new
-    #   Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(intro)
-    #   intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000002')
-    #   intro.expects(:title=).with("Oral Answers to Questions")
-    #   intro.stubs(:paragraphs).returns([])
-    #         
-    #   @parser.parse_pages
-    # end
+    should "find and deal with the main heading and both intros" do
+      stub_page("test/data/debates_and_oral_answers_header.html")
+      stub_saves
+      HansardPage.expects(:new).returns(@page)
+      
+      section = Section.new
+      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+      section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
+      
+      intro = Intro.new
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
+      intro.expects(:title=).with('House of Commons')
+      intro.expects(:section=).with(section)
+      intro.expects(:url=).with("#{@url}\#11071988000007")
+      intro.expects(:sequence=).with(1)
+      intro.stubs(:columns=)
+      intro.expects(:paragraphs).at_least_once.returns([])
+      intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000001')
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000001').returns(ncpara)
+      ncpara.expects(:text=).with("Tuesday 19 July 2011")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000002').returns(ncpara)
+      ncpara.expects(:text=).with("The House met at half-past Eleven o'clock")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000003').returns(ncpara)
+      ncpara.expects(:text=).with("Prayers")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000004').returns(ncpara)
+      ncpara.expects(:text=).with("[Mr Speaker in the Chair]")
+      
+      intro = Intro.new
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(intro)
+      intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000002')
+      intro.expects(:title=).with("Oral Answers to Questions")
+      intro.stubs(:paragraphs).returns([])
+            
+      @parser.parse_pages
+    end
     
-    # should "create a Question for each question found" do
-    #   stub_page("test/data/debates_and_oral_answers.html")
-    #   stub_saves
-    #   HansardPage.expects(:new).returns(@page)
-    #   
-    #   section = Section.new
-    #   Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
-    #   section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
-    #   
-    #   intro = Intro.new
-    #   Intro.any_instance.stubs(:paragraphs).returns([])
-    #   intro.stubs(:text=)
-    #   intro.stubs(:id).returns("intro")
-    #   Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
-    #   Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(intro)
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with('intro_p000001').returns(ncpara)
-    #   NonContributionPara.expects(:find_or_create_by_id).with('intro_p000002').returns(ncpara)
-    #   NonContributionPara.expects(:find_or_create_by_id).with('intro_p000003').returns(ncpara)
-    #   NonContributionPara.expects(:find_or_create_by_id).with('intro_p000004').returns(ncpara)
-    #   
-    #   question = Question.new
-    #   Question.any_instance.stubs(:paragraphs).returns([])
-    #   Question.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003").returns(question)
-    #   question.expects(:id).at_least_once.returns("2099-01-01_hansard_c_d_000003")
-    #   question.expects(:department=).with("Foreign and Commonwealth Office")
-    #   question.expects(:title=).with("Syria")
-    #   question.expects(:number=).with("66855")
-    #   
-    #   ncpara = NonContributionPara.new
-    #   NonContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000001").returns(ncpara)
-    #   ncpara.expects(:text=).with("The Secretary of State was asked - ")
-    #   ncpara.expects(:fragment=).with(question)
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000002").returns(contribution)
-    #   contribution.expects(:text=).with("1. Mr David Hanson (Delyn) (Lab): When he next expects to discuss the situation in Syria with his US counterpart. [66855]")
-    #   contribution.expects(:member=).with("David Hanson")
-    #   contribution.expects(:speaker_printed_name=).with("Mr David Hanson")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000003").returns(contribution)
-    #   contribution.expects(:text=).with("The Secretary of State for Foreign and Commonwealth Affairs (Mr William Hague): I am in regular contact with Secretary Clinton and I last discussed Syria with her on Friday.")
-    #   contribution.expects(:member=).with("William Hague")
-    #   contribution.expects(:speaker_printed_name=).with("The Secretary of State for Foreign and Commonwealth Affairs (Mr William Hague)")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000004").returns(contribution)
-    #   contribution.expects(:text=).with("Mr Hanson: I thank the Foreign Secretary for that answer. Given the recent violence, including the reported shooting of unarmed protesters, does he agree with Secretary of State Clinton that the Syrian Government have lost legitimacy? Given the level of violence, particularly the attacks on the US embassy and the French embassy, what steps is he taking to ensure the security of British citizens who work for the United Kingdom and are operating in Syria now?")
-    #   contribution.expects(:member=).with("David Hanson")
-    #   contribution.expects(:speaker_printed_name=).with("Mr Hanson")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000005").returns(contribution)
-    #   contribution.expects(:text=).with("Mr Hague: The right hon. Gentleman raises some important issues in relation to recent events in Syria. We absolutely deplore the continuing violence against protesters. Reports overnight from the city of Homs suggest that between 10 and 14 people were killed, including a 12-year-old child. We have condemned the attacks on the American and French embassies and we called in the Syrian ambassador last Wednesday to deliver our protests and to demand that Syria observes the requirements of the Vienna convention. The US and British Governments are united in saying that President Assad is losing legitimacy and should reform or step aside, and that continues to be our message.")
-    #   contribution.expects(:member=).with("William Hague")
-    #   contribution.expects(:speaker_printed_name=).with("Mr Hague")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000006").returns(contribution)
-    #   contribution.expects(:text=).with("Mr Philip Hollobone (Kettering) (Con): Iran has been involved in training Syrian troops and providing materi\303\251l assistance, including crowd-dispersal equipment. What assessment has the Foreign Secretary made of the dark hand of Iran in fomenting trouble in the middle east and in supporting illegitimate regimes?")
-    #   contribution.expects(:member=).with("Philip Hollobone")
-    #   contribution.expects(:speaker_printed_name=).with("Mr Philip Hollobone")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000007").returns(contribution)
-    #   contribution.expects(:text=).with("Mr Hague: Iran has certainly been involved in the way that my hon. Friend describes, and I set out a few weeks ago that I believed it to be involved in that way. It shows the extraordinary hypocrisy of the Iranian leadership")
-    #   contribution.expects(:member=).with("William Hague")
-    #   contribution.expects(:speaker_printed_name=).with("Mr Hague")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000008").returns(contribution)
-    #   contribution.expects(:text=).with("on this that it has been prepared to encourage protests in Egypt, Tunisia and other countries while it has brutally repressed protest in its own country and is prepared to connive in doing so in Syria.")
-    #   contribution.expects(:member=).with("William Hague")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000009").returns(contribution)
-    #   contribution.expects(:text=).with("Stephen Twigg (Liverpool, West Derby) (Lab/Co-op): Does the Foreign Secretary agree that the world has been far too slow in its response to the appalling abuses of human rights in Syria? Surely, after the events of the weekend and the past few days in particular, there is now an urgent need for a clear and strong United Nations Security Council resolution.")
-    #   contribution.expects(:member=).with("Stephen Twigg")
-    #   contribution.expects(:speaker_printed_name=).with("Stephen Twigg")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000010").returns(contribution)
-    #   contribution.expects(:text=).with("Mr Hague: I think the world has been not so much slow as not sufficiently united on this. It has not been possible for the Arab League to arrive at a clear, strong position, which makes the situation entirely different to that in Libya, where the Arab League called on the international community to assist and intervene. There has not been the necessary unity at the United Nations Security Council and at times Russia has threatened to veto any resolution. Our resolution, which was put forward with our EU partners, remains very much on the table and certainly has the support of nine countries. We would like the support of more than nine countries to be able to put it to a vote in the Security Council, but it is very much on the table and we reserve the right at any time to press it to a vote in the United Nations. The hon. Gentleman is quite right to say that recent events add further to the case for doing so.")
-    #   contribution.expects(:member=).with("William Hague")
-    #   contribution.expects(:speaker_printed_name=).with("Mr Hague")
-    #   
-    #   question = Question.new
-    #   Question.any_instance.stubs(:paragraphs).returns([])
-    #   Question.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004").returns(question)
-    #   question.expects(:id).at_least_once.returns("2099-01-01_hansard_c_d_000004")
-    #   question.expects(:department=).with("Foreign and Commonwealth Office")
-    #   question.expects(:title=).with("Nuclear Non-proliferation and Disarmament")
-    #   question.expects(:number=).with("66858")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004_p000001").returns(contribution)
-    #   contribution.expects(:text=).with("3. Paul Flynn (Newport West) (Lab): What recent progress his Department has made on nuclear non-proliferation and disarmament. [66858]")
-    #   contribution.expects(:member=).with("Paul Flynn")
-    #   contribution.expects(:speaker_printed_name=).with("Paul Flynn")
-    #   
-    #   contribution = ContributionPara.new
-    #   ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004_p000002").returns(contribution)
-    #   contribution.expects(:text=).with("The Parliamentary Under-Secretary of State for Foreign and Commonwealth Affairs (Alistair Burt): We continue to work across all three pillars of the non-proliferation treaty to build on the success of last year's review conference in New York. I am particularly proud of the work we have done towards ensuring the first conference of nuclear weapon states, which was held recently in Paris - the P5 conference - in which further progress was made, particularly towards disarmament.")
-    #   contribution.expects(:member=).with("Alistair Burt")
-    #   contribution.expects(:speaker_printed_name=).with("The Parliamentary Under-Secretary of State for Foreign and Commonwealth Affairs (Alistair Burt)")
-    #   
-    #   @parser.parse_pages
-    # end
+    should "create a Question for each question found" do
+      stub_page("test/data/debates_and_oral_answers.html")
+      stub_saves
+      HansardPage.expects(:new).returns(@page)
+      
+      section = Section.new
+      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+      section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
+      
+      intro = Intro.new
+      Intro.any_instance.stubs(:paragraphs).returns([])
+      intro.stubs(:text=)
+      intro.stubs(:id).returns("intro")
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002').returns(intro)
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000001').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000002').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000003').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000004').returns(ncpara)
+      
+      question = Question.new
+      Question.any_instance.stubs(:paragraphs).returns([])
+      Question.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003").returns(question)
+      question.expects(:id).at_least_once.returns("2099-01-01_hansard_c_d_000003")
+      question.expects(:department=).with("Foreign and Commonwealth Office")
+      question.expects(:title=).with("Syria")
+      question.expects(:number=).with("66855")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000001").returns(ncpara)
+      ncpara.expects(:text=).with("The Secretary of State was asked - ")
+      ncpara.expects(:fragment=).with(question)
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000002").returns(contribution)
+      contribution.expects(:text=).with("1. Mr David Hanson (Delyn) (Lab): When he next expects to discuss the situation in Syria with his US counterpart. [66855]")
+      contribution.expects(:member=).with("David Hanson")
+      contribution.expects(:speaker_printed_name=).with("Mr David Hanson")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000003").returns(contribution)
+      contribution.expects(:text=).with("The Secretary of State for Foreign and Commonwealth Affairs (Mr William Hague): I am in regular contact with Secretary Clinton and I last discussed Syria with her on Friday.")
+      contribution.expects(:member=).with("William Hague")
+      contribution.expects(:speaker_printed_name=).with("The Secretary of State for Foreign and Commonwealth Affairs (Mr William Hague)")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000004").returns(contribution)
+      contribution.expects(:text=).with("Mr Hanson: I thank the Foreign Secretary for that answer. Given the recent violence, including the reported shooting of unarmed protesters, does he agree with Secretary of State Clinton that the Syrian Government have lost legitimacy? Given the level of violence, particularly the attacks on the US embassy and the French embassy, what steps is he taking to ensure the security of British citizens who work for the United Kingdom and are operating in Syria now?")
+      contribution.expects(:member=).with("David Hanson")
+      contribution.expects(:speaker_printed_name=).with("Mr Hanson")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000005").returns(contribution)
+      contribution.expects(:text=).with("Mr Hague: The right hon. Gentleman raises some important issues in relation to recent events in Syria. We absolutely deplore the continuing violence against protesters. Reports overnight from the city of Homs suggest that between 10 and 14 people were killed, including a 12-year-old child. We have condemned the attacks on the American and French embassies and we called in the Syrian ambassador last Wednesday to deliver our protests and to demand that Syria observes the requirements of the Vienna convention. The US and British Governments are united in saying that President Assad is losing legitimacy and should reform or step aside, and that continues to be our message.")
+      contribution.expects(:member=).with("William Hague")
+      contribution.expects(:speaker_printed_name=).with("Mr Hague")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000006").returns(contribution)
+      contribution.expects(:text=).with("Mr Philip Hollobone (Kettering) (Con): Iran has been involved in training Syrian troops and providing materi\303\251l assistance, including crowd-dispersal equipment. What assessment has the Foreign Secretary made of the dark hand of Iran in fomenting trouble in the middle east and in supporting illegitimate regimes?")
+      contribution.expects(:member=).with("Philip Hollobone")
+      contribution.expects(:speaker_printed_name=).with("Mr Philip Hollobone")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000007").returns(contribution)
+      contribution.expects(:text=).with("Mr Hague: Iran has certainly been involved in the way that my hon. Friend describes, and I set out a few weeks ago that I believed it to be involved in that way. It shows the extraordinary hypocrisy of the Iranian leadership")
+      contribution.expects(:member=).with("William Hague")
+      contribution.expects(:speaker_printed_name=).with("Mr Hague")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000008").returns(contribution)
+      contribution.expects(:text=).with("on this that it has been prepared to encourage protests in Egypt, Tunisia and other countries while it has brutally repressed protest in its own country and is prepared to connive in doing so in Syria.")
+      contribution.expects(:member=).with("William Hague")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000009").returns(contribution)
+      contribution.expects(:text=).with("Stephen Twigg (Liverpool, West Derby) (Lab/Co-op): Does the Foreign Secretary agree that the world has been far too slow in its response to the appalling abuses of human rights in Syria? Surely, after the events of the weekend and the past few days in particular, there is now an urgent need for a clear and strong United Nations Security Council resolution.")
+      contribution.expects(:member=).with("Stephen Twigg")
+      contribution.expects(:speaker_printed_name=).with("Stephen Twigg")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000003_p000010").returns(contribution)
+      contribution.expects(:text=).with("Mr Hague: I think the world has been not so much slow as not sufficiently united on this. It has not been possible for the Arab League to arrive at a clear, strong position, which makes the situation entirely different to that in Libya, where the Arab League called on the international community to assist and intervene. There has not been the necessary unity at the United Nations Security Council and at times Russia has threatened to veto any resolution. Our resolution, which was put forward with our EU partners, remains very much on the table and certainly has the support of nine countries. We would like the support of more than nine countries to be able to put it to a vote in the Security Council, but it is very much on the table and we reserve the right at any time to press it to a vote in the United Nations. The hon. Gentleman is quite right to say that recent events add further to the case for doing so.")
+      contribution.expects(:member=).with("William Hague")
+      contribution.expects(:speaker_printed_name=).with("Mr Hague")
+      
+      question = Question.new
+      Question.any_instance.stubs(:paragraphs).returns([])
+      Question.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004").returns(question)
+      question.expects(:id).at_least_once.returns("2099-01-01_hansard_c_d_000004")
+      question.expects(:department=).with("Foreign and Commonwealth Office")
+      question.expects(:title=).with("Nuclear Non-proliferation and Disarmament")
+      question.expects(:number=).with("66858")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004_p000001").returns(contribution)
+      contribution.expects(:text=).with("3. Paul Flynn (Newport West) (Lab): What recent progress his Department has made on nuclear non-proliferation and disarmament. [66858]")
+      contribution.expects(:member=).with("Paul Flynn")
+      contribution.expects(:speaker_printed_name=).with("Paul Flynn")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000004_p000002").returns(contribution)
+      contribution.expects(:text=).with("The Parliamentary Under-Secretary of State for Foreign and Commonwealth Affairs (Alistair Burt): We continue to work across all three pillars of the non-proliferation treaty to build on the success of last year's review conference in New York. I am particularly proud of the work we have done towards ensuring the first conference of nuclear weapon states, which was held recently in Paris - the P5 conference - in which further progress was made, particularly towards disarmament.")
+      contribution.expects(:member=).with("Alistair Burt")
+      contribution.expects(:speaker_printed_name=).with("The Parliamentary Under-Secretary of State for Foreign and Commonwealth Affairs (Alistair Burt)")
+      
+      @parser.parse_pages
+    end
     
     should "deal with the Topical Questions section" do
       stub_page("test/data/topical_questions.html")
