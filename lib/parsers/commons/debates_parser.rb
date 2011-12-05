@@ -235,7 +235,7 @@ class DebatesParser < Parser
                   when /^st_/
                     if @snippet_type == "division" and @div_snippet
                       @snippet << @div_snippet
-                      @k_html << "<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>#{@div_snippet.summary}</p>"
+                      @k_html << html_fix(@coder.encode("<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b></div><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b></div><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>&nbsp;</p><p>#{@div_snippet.summary}</p>"))
                       @div_snippet = nil
                     end
                     @snippet_type = "contribution"
@@ -243,7 +243,7 @@ class DebatesParser < Parser
                   when /^stpa_/
                     if @snippet_type == "division" and @div_snippet
                       @snippet << @div_snippet
-                      @k_html << "<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>#{@div_snippet.summary}</p>"
+                      @k_html << html_fix(@coder.encode("<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b></div><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b></div><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>&nbsp;</p><p>#{@div_snippet.summary}</p>"))
                       @div_snippet = nil
                     end
                     @snippet_type = "contribution"
@@ -310,7 +310,7 @@ class DebatesParser < Parser
                 @div_snippet.summary = text
                 if @div_snippet
                   @snippet << @div_snippet
-                  @k_html << "<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b></div><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b></div><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>&nbsp;</p><p>#{@div_snippet.summary}</p>"
+                  @k_html << html_fix(@coder.encode("<p>#{@div_snippet.overview}</p><p>&nbsp;</p><div>Division No. #{@div_snippet.number} - #{@div_snippet.timestamp}</div><p>&nbsp;</p><div><b>AYES</b></div><div>#{@div_snippet.ayes.join("</div><div>")}</div><div>Tellers for the Ayes: #{@div_snippet.tellers_ayes}</div><p>&nbsp;</p><div><b>NOES</b></div><div>#{@div_snippet.noes.join("</div><div>")}</div><div>Tellers for the Noes: #{@div_snippet.tellers_noes}</div><p>&nbsp;</p><p>#{@div_snippet.summary}</p>"))
                   @div_snippet = nil
                 end
               when /^The House divided/
