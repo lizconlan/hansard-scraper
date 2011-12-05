@@ -42,3 +42,12 @@ class ContributionTable < Paragraph
   key :member, String
   key :contribution_id, String
 end
+
+class Division < Paragraph
+  key :number, String
+  key :tellers_ayes, String
+  key :tellers_noes, String
+  key :ayes, Array
+  key :noes, Array
+  key :timestamp, String
+end

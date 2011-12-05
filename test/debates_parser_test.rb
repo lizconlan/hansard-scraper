@@ -14,6 +14,7 @@ class DebatesParserTest < Test::Unit::TestCase
     Hansard.any_instance.stubs(:save)
     Debate.any_instance.stubs(:save)
     Question.any_instance.stubs(:save)
+    Division.any_instance.stubs(:save)
   end
   
   def stub_hansard
@@ -138,6 +139,7 @@ class DebatesParserTest < Test::Unit::TestCase
       intro.stubs(:columns=)
       intro.expects(:paragraphs).at_least_once.returns([])
       intro.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d_000001')
+      intro.expects(:k_html=).with("<h3>Backbench Business</h3><p>&nbsp;</p><p>[30th Allotted Day]</p>")
       
       ncpara.expects(:text=).with("[30th Allotted Day]")
       
@@ -202,7 +204,7 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
   end
-
+  
   context "when handling the Oral Answers section" do
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
@@ -523,6 +525,85 @@ class DebatesParserTest < Test::Unit::TestCase
       contribution.expects(:text=)
       contribution.expects(:member=).with("Hilary Benn")
       contribution.expects(:speaker_printed_name=).with("Hilary Benn")
+      
+      @parser.parse_pages
+    end
+  end
+
+  context "when handling a Debate containing a Division" do
+    setup do
+      @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
+      stub_saves
+      stub_hansard
+      
+      @parser = DebatesParser.new("2099-01-01")
+      @parser.expects(:section_prefix).returns("d")
+      @parser.expects(:link_to_first_page).returns(@url)
+    end
+    
+    should "not handle store the Division with Ayes and Noes" do
+      stub_page("test/data/debate_with_division.html")
+      stub_saves
+      HansardPage.expects(:new).returns(@page)
+      
+      section = Section.new
+      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+      section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
+      
+      intro = Intro.new
+      Intro.any_instance.stubs(:paragraphs).returns([])
+      intro.stubs(:text=)
+      intro.stubs(:id).returns("intro")
+      Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000001').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000002').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000003').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).with('intro_p000004').returns(ncpara)
+      
+      debate = Debate.new
+      Debate.expects(:find_or_create_by_id).with("2099-01-01_hansard_c_d_000002").returns(debate)
+      debate.expects(:id).at_least_once.returns("2099-01-01_hansard_c_d_000002")
+      debate.stubs(:paragraphs).returns([])
+      debate.expects(:title=).with("Public Bodies Bill [Lords]")
+      
+      ncpara = NonContributionPara.new
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000001').returns(ncpara)
+      ncpara.expects(:text=).with("[Relevant documents: The Fifth Report from the Public Administration Select Committee, Smaller Government: Shrinking the Quango State, HC 537, and the Government response, Cm 8044 .]")
+      
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000002').returns(ncpara)
+      ncpara.expects(:text=).with("Second Reading")
+      
+      contribution = ContributionPara.new
+      ContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000003').returns(contribution)
+      contribution.expects(:text=).with("Mr Hurd: In summary, the reforms we have proposed and that have been debated again today will produce a leaner and more effective system of public bodies centred on the principle of ministerial accountability. We have listened intently to the comments and concerns expressed during the debate and recognise that there are areas where the Government can helpfully produce further clarity and assurance, and the Deputy Leader of the House and I look forward to continuing to engage with hon. Members in Committee and elsewhere.")
+      
+      ContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000004').returns(contribution)
+      contribution.expects(:text=).with("However, I reiterate my hope that the House can come together in support of the belief that ministerial accountability for public functions and the use of public money should be at the heart of how we conduct ourselves. The Government believe that the proposals embodied in the Bill and in our plans for a regular comprehensive review of all public bodies will set a new standard for the management and review of public bodies, and on that basis I commend the Bill to the House.")
+      
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000005').returns(ncpara)
+      ncpara.expects(:text=).with("Question put, That the amendment be made.")
+      
+      division = Division.new
+      Division.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000006').returns(division)
+      division.expects(:number=).with('321')
+      division.expects(:timestamp=).with("9.59 pm")
+      division.expects(:tellers_ayes=).with('Lilian Greenwood and Gregg McClymont')
+      division.expects(:tellers_noes=).with('James Duddridge and Norman Lamb')
+      division.expects(:ayes=).with(['Abbott, Ms Diane', 'Abrahams, Debbie', 'Ainsworth, rh Mr Bob', 'Morris, Grahame M. (Easington)'])
+      division.expects(:noes=).with(['Adams, Nigel', 'Afriyie, Adam', 'Aldous, Peter', 'Alexander, rh Danny', 'Davies, David T. C. (Monmouth)'])
+      division.expects(:text=).with('division')
+      division.expects(:text=).with("The House divided: Ayes 231, Noes 307. \n 9.59 pm - Division No. 321 \n Ayes: Abbott, Ms Diane; Abrahams, Debbie; Ainsworth, rh Mr Bob; Morris, Grahame M. (Easington), Tellers for the Ayes: Lilian Greenwood and Gregg McClymont, Noes: Adams, Nigel; Afriyie, Adam; Aldous, Peter; Alexander, rh Danny; Davies, David T. C. (Monmouth), Tellers for the Noes: James Duddridge and Norman Lamb \n Question accordingly negatived.")
+      
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000007').returns(ncpara)
+      ncpara.expects(:text=).with("Question put forthwith (Standing Order No. 62(2)), That the Bill be now read a Second Time.")
+      
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000008').returns(ncpara)
+      ncpara.expects(:text=).with("Question agreed to .")
+      
+      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000002_p000009').returns(ncpara)
+      ncpara.expects(:text=).with("Bill accordingly read a Second time.")
       
       @parser.parse_pages
     end

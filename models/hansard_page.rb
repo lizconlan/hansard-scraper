@@ -41,5 +41,5 @@ class HansardPage
 end
 
 class HansardSnippet
-  attr_accessor :text, :speaker, :column, :desc, :contribution_seq, :printed_name, :link
+  attr_accessor :text, :speaker, :column, :desc, :contribution_seq, :printed_name, :link, :overview, :summary, :ayes, :noes, :tellers_ayes, :tellers_noes, :number, :timestamp
 end

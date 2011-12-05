@@ -22,6 +22,7 @@ class DebatesParser < Parser
     
     @column = ""
     @subsection = ""
+    @div_snippet = nil
   end
   
   def reset_vars
@@ -209,11 +210,14 @@ class DebatesParser < Parser
                 when /^Motion/
                   unless (node.xpath("i").collect { |x| x.text }).join(" ") =~ /and Question p/
                     @subsection = "Motion"
+                    @member = nil
                   end
                 when /^Debate resumed/
                   @subject = "#{@subject} (resumed)"
-                when /^Ordered/
+                  @member = nil
+                when /^Ordered/, /^Question put/
                   @subsection = ""
+                  @member = nil
               end
             end
           end
@@ -229,7 +233,21 @@ class DebatesParser < Parser
                     @snippet_type = "question"
                     @link = node.attr("name")
                   when /^st_/
+                    if @snippet_type == "division" and @div_snippet
+                      @snippet << @div_snippet
+                      @div_snippet = nil
+                    end
                     @snippet_type = "contribution"
+                    @link = node.attr("name")
+                  when /^stpa_/
+                    if @snippet_type == "division" and @div_snippet
+                      @snippet << @div_snippet
+                      @div_snippet = nil
+                    end
+                    @snippet_type = "contribution"
+                    @link = node.attr("name")
+                  when /^divlst_/
+                    @snippet_type = "division"
                     @link = node.attr("name")
                 end
               end
@@ -283,6 +301,64 @@ class DebatesParser < Parser
             elsif text[text.length-1..text.length] == "]" and text.length > 3
               question = text[text.rindex("[")+1..text.length-2]
               @questions << sanitize_text(question)
+            end
+          elsif @snippet_type == "division"
+            case text.strip
+              when /^(Question|Motion)/
+                @div_snippet.summary = text
+                if @div_snippet
+                  @snippet << @div_snippet
+                  @div_snippet = nil
+                end
+              when /^The House divided/
+                @div_snippet = HansardSnippet.new
+                @div_snippet.desc = "division"
+                @div_snippet.text = "division"
+                @div_snippet.overview = text
+                @div_snippet.ayes = []
+                @div_snippet.noes = []
+                @div_snippet.tellers_ayes = ""
+                @div_snippet.tellers_noes = ""
+              when /^Ayes \d+, Noes \d+./
+                @div_snippet.overview = "#{@div_snippet.overview} #{text}".strip
+              when /^Division No\. ([^\]]*)\]/
+                @div_snippet.number = $1
+              when /\[(\d+\.\d+ (a|p)m)/
+                @div_snippet.timestamp = $1
+              when "AYES"
+                @current_list = "ayes"
+                @tellers = false
+              when "NOES"
+                @current_list = "noes"
+                @tellers = false
+              when ""  
+                #ignore
+              when /^Tellers for the (Ayes|Noes):/
+                @tellers = true
+              when /^[A-Z][a-z]*, (rh)?\s?(Mr|Ms|Mrs|Sir)?\s?[A-Z][a-z]*/
+                if @current_list == "ayes"
+                  @div_snippet.ayes << text.strip
+                else
+                  @div_snippet.noes << text.strip
+                end
+              else
+                if @tellers
+                  if @current_list == "ayes"
+                    @div_snippet.tellers_ayes = "#{@div_snippet.tellers_ayes} #{text.strip}".strip
+                  else
+                    @div_snippet.tellers_noes = "#{@div_snippet.tellers_noes} #{text.strip}".strip
+                  end
+                else
+                  if @current_list == "ayes"
+                    aye = @div_snippet.ayes.pop
+                    aye = "#{aye} #{text.strip}"
+                    @div_snippet.ayes << aye
+                  else
+                    noe = @div_snippet.noes.pop
+                    noe = "#{noe} #{text.strip}"
+                    @div_snippet.noes << noe
+                  end
+                end
             end
           end
           if @subsection == "Petition"
@@ -338,7 +414,7 @@ class DebatesParser < Parser
               @intro[:links] << "#{page.url}\##{@last_link}"
               
               @k_html << "<p>#{text}</p>"
-            else
+            elsif @snippet_type != "division"
               snippet = HansardSnippet.new
               if @member
                 snippet.speaker = @member.index_name                  
@@ -346,15 +422,17 @@ class DebatesParser < Parser
               snippet.text = sanitize_text(text)
               snippet.column = @end_column
               
-              if snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.post} \(#{@member.name}\)/
-                snippet.printed_name = "#{@member.post} (#{@member.name})"
-                snippet.text = sanitize_text(text)
-              elsif snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.search_name}/
-                snippet.printed_name = @member.search_name
-                snippet.text = sanitize_text(text)
-              else
-                snippet.printed_name = @member.printed_name
-                snippet.text = sanitize_text(text)
+              if @member
+                if snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.post} \(#{@member.name}\)/
+                  snippet.printed_name = "#{@member.post} (#{@member.name})"
+                  snippet.text = sanitize_text(text)
+                elsif snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.search_name}/
+                  snippet.printed_name = @member.search_name
+                  snippet.text = sanitize_text(text)
+                else
+                  snippet.printed_name = @member.printed_name
+                  snippet.text = sanitize_text(text)
+                end
               end
               
               @snippet << snippet
@@ -466,6 +544,16 @@ class DebatesParser < Parser
                 case snippet.desc
                   when "timestamp"
                     para = Timestamp.find_or_create_by_id(para_id)
+                  when "division"
+                    para = Division.find_or_create_by_id(para_id)
+                    para.number = snippet.number
+                    para.ayes = snippet.ayes
+                    para.noes = snippet.noes
+                    para.tellers_ayes = snippet.tellers_ayes
+                    para.tellers_noes = snippet.tellers_noes
+                    para.timestamp = snippet.timestamp
+                    
+                    para.text = "#{snippet.overview} \n #{snippet.timestamp} - Division No. #{snippet.number} \n Ayes: #{snippet.ayes.join("; ")}, Tellers for the Ayes: #{snippet.tellers_ayes}, Noes: #{snippet.noes.join("; ")}, Tellers for the Noes: #{snippet.tellers_noes} \n #{snippet.summary}"
                   else
                     if snippet.speaker.nil?
                       para = NonContributionPara.find_or_create_by_id(para_id)

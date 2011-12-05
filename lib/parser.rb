@@ -215,6 +215,9 @@ class Parser
         when /^st_/
           @snippet_type = "contribution"
           @link = node.attr("name")
+        when /^divlst_/
+          @snippet_type = "division"
+          @link = node.attr("name")
       end 
     end
     
