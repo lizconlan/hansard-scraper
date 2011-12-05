@@ -52,12 +52,14 @@ class DebatesParser < Parser
           if text == "House of Commons"
             @intro[:title] = node.content
             @intro[:link] = "#{page.url}\##{@last_link}"
+            @k_html << "<h1>#{text}</h1>"
           end
           
           if text == "Oral Answers to Questions"
             @subsection = "Oral Answer"
             @intro[:title] = node.content
             @intro[:link] = "#{page.url}\##{@last_link}"
+            @k_html << "<h3>#{text}</h3>"
           end
         when "h3"
           text = node.text.gsub("\n", "").squeeze(" ").strip
@@ -70,6 +72,8 @@ class DebatesParser < Parser
               @questions = []
               @petitions = []
               @section_members = {}
+              
+              @k_html << "<h3>#{text}</h3>"
             else
               @subject = sanitize_text(text)
               if @intro[:title]
@@ -95,6 +99,7 @@ class DebatesParser < Parser
             end
             
             @subject = text
+            @k_html << "<h4>#{text}</h4>"
           else
             @subsection = ""
             if text.downcase == "prayers"
@@ -131,21 +136,23 @@ class DebatesParser < Parser
                   end
               end
               unless text.downcase == "petition"
-                snippet = HansardSnippet.new
-                snippet.text = sanitize_text(text)
-                snippet.column = @end_column
-                @snippet << snippet
                 @subject = sanitize_text(text)
                 @segment_link = "#{page.url}\##{@last_link}"
               end
             end
+            @k_html << "<h3>#{text}</h3>"
           end
         when "h4"
-          text = node.text.gsub("\n", "").squeeze(" ").strip
+          text = sanitize_text(node.text.gsub("\n", "").squeeze(" ").strip)
           if @intro[:title]
-            @intro[:snippets] << sanitize_text(text)
+            @intro[:snippets] << text
             @intro[:columns] << @end_column
             @intro[:links] << "#{page.url}\##{@last_link}"
+            if text =~ /^[A-Z][a-z]*day \d{1,2} [A-Z][a-z]* \d{4}$/
+              @k_html << "<h2>#{text}</h2>"
+            else
+              @k_html << "<p>#{text}</p>"
+            end
           else
             if text.downcase =~ /^back\s?bench business$/
               #treat as honourary h3
@@ -159,6 +166,11 @@ class DebatesParser < Parser
               end
               @intro[:title] = text
               @subsection = ""
+              if text =~ /^[A-Z][a-z]*day \d{1,2} [A-Z][a-z]* \d{4}$/
+                @k_html << "<h2>#{text}</h2>"
+              else
+                @k_html << "<h3>#{text}</h3>"
+              end
             else              
               snippet = HansardSnippet.new
               snippet.text = sanitize_text(text)
@@ -168,6 +180,13 @@ class DebatesParser < Parser
                 @subject = sanitize_text(text)
               end
               @segment_link = "#{page.url}\##{@last_link}"
+              if text =~ /^[A-Z][a-z]*day \d{1,2} [A-Z][a-z]* \d{4}$/
+                @k_html << "<h2>#{text}</h2>"
+              elsif @subsection == "Oral Answer" and !(text =~ / was asked /)
+                @k_html << "<h4>#{text}</h4>"
+              else
+                @k_html << "<p>#{text}</p>"
+              end
             end
           end
         when "h5"
@@ -179,6 +198,7 @@ class DebatesParser < Parser
           snippet.column = @end_column
           snippet.link = "#{page.url}\##{@last_link}"
           @snippet << snippet
+          @k_html << "<div>#{text}</div>"
         when "p", "center"
           column_desc = ""
           member_name = ""
@@ -316,6 +336,8 @@ class DebatesParser < Parser
               @intro[:snippets] << text
               @intro[:columns] << @end_column
               @intro[:links] << "#{page.url}\##{@last_link}"
+              
+              @k_html << "<p>#{text}</p>"
             else
               snippet = HansardSnippet.new
               if @member
@@ -324,16 +346,34 @@ class DebatesParser < Parser
               snippet.text = sanitize_text(text)
               snippet.column = @end_column
               
-              if snippet.text =~ /^(T?\d+\.\s+(\[\d+\]\s+)?)?#{@member.post} \(#{@member.name}\)/
+              if snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.post} \(#{@member.name}\)/
                 snippet.printed_name = "#{@member.post} (#{@member.name})"
-              elsif snippet.text =~ /^(T?\d+\.\s+(\[\d+\]\s+)?)?#{@member.search_name}/
+                snippet.text = sanitize_text(text)
+              elsif snippet.text =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{@member.search_name}/
                 snippet.printed_name = @member.search_name
+                snippet.text = sanitize_text(text)
               else
                 snippet.printed_name = @member.printed_name
+                snippet.text = sanitize_text(text)
               end
               
               @snippet << snippet
               @segment_link = "#{page.url}\##{@last_link}"
+              
+              unless snippet.text == ""
+                if snippet.printed_name and snippet.text.strip =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
+                  prefix = $1
+                  if prefix
+                    pref_length = prefix.length
+                  else
+                    pref_length = 0
+                  end
+                  k_html = "<p>#{prefix}<b>#{@coder.encode(snippet.printed_name, :named)}</b>#{@coder.encode(snippet.text.strip[snippet.printed_name.length+pref_length..snippet.text.strip.length], :named)}</p>"
+                  @k_html << html_fix(k_html.gsub("\t"," ").squeeze(" "))
+                else
+                  @k_html << "<p>#{html_fix(@coder.encode(snippet.text.strip, :named))}</p>"
+                end
+              end
             end
           end
         when "div"
@@ -374,6 +414,7 @@ class DebatesParser < Parser
           intro.paragraphs << para
         end
         intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
+        intro.k_html = @k_html.join("<p>&nbsp;</p>")
 
         intro.save
         @hansard_section.fragments << intro
@@ -455,6 +496,7 @@ class DebatesParser < Parser
           end
 
           @debate.columns = @debate.paragraphs.collect{|x| x.column}.uniq
+          @debate.k_html = @k_html.join("<p>&nbsp;</p>")
           @debate.save
           @start_column = @end_column if @end_column != ""
 
@@ -464,6 +506,7 @@ class DebatesParser < Parser
           p ""
         end
       end
+      @k_html = []
     end
 
 end
