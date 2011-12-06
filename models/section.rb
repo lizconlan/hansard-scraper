@@ -51,13 +51,18 @@ class Section
     intro = ""
     dept = ""
     question_html = ""
+    question_title = ""
     sequence = 0
     count = 0
     fragments.each do |fragment|
       count += 1
       case fragment._type
         when "Intro"
-          intro = fragment.k_html
+          if intro == "" 
+            intro = fragment.k_html
+          else
+            intro = "#{intro}<p>&nbsp;#{fragment.k_html}"
+          end
         else
           if name == "Written Answers" or name == "Written Ministerial Statements"
             if fragment.department != dept and dept != ""
@@ -77,6 +82,28 @@ class Section
             if count == fragments.count
               sequence += 1
               k_fragments << {:title => fragment.department, :sequence => sequence, :html => "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"}
+            end
+          elsif name == "Debates and Oral Answers"
+            if fragment.title =~ /Topical Questions/
+              question_title = "Topical Questions"
+              if question_html == ""
+                question_html = fragment.k_html
+              else
+                question_html = "#{question_html}<p>&nbsp;</p>#{fragment.k_html}"
+              end
+            else
+              sequence += 1
+              unless question_html == ""
+                k_fragments << {:title => question_title, :sequence => sequence, :html => question_html}
+                question_html = ""
+                sequence += 1
+              end
+              if intro == ""
+                k_fragments << {:title => fragment.title, :sequence => sequence, :html => fragment.k_html}
+              else
+                k_fragments << {:title => fragment.title, :sequence => sequence, :html => intro + "<p>&nbsp;</p>" + fragment.k_html}
+                intro = ""
+              end
             end
           else
             sequence += 1
