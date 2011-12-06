@@ -75,6 +75,7 @@ class DebatesParser < Parser
               @section_members = {}
               
               @k_html << "<h3>#{text}</h3>"
+              @segment_link = "#{page.url}\##{@last_link}"
             else
               @subject = sanitize_text(text)
               if @intro[:title]
@@ -101,6 +102,7 @@ class DebatesParser < Parser
             
             @subject = text
             @k_html << "<h4>#{text}</h4>"
+            @segment_link = "#{page.url}\##{@last_link}"
           else
             @subsection = ""
             if text.downcase == "prayers"
@@ -439,7 +441,7 @@ class DebatesParser < Parser
               end
               
               @snippet << snippet
-              @segment_link = "#{page.url}\##{@last_link}"
+              @segment_link = "#{page.url}\##{@last_link}" if @segment_link == ""
               
               unless snippet.text == ""
                 if snippet.printed_name and snippet.text.strip =~ /^((T|Q)?\d+\.\s+(\[\d+\]\s+)?)?#{snippet.printed_name.gsub('(','\(').gsub(')','\)')}/
