@@ -336,11 +336,11 @@ class DebatesParser < Parser
               when "NOES"
                 @current_list = "noes"
                 @tellers = false
-              when ""  
+              when "", /^\d+ [A-Z][a-z]+ \d{4} : Column (\d+(?:WH)?(?:WS)?(?:P)?(?:W)?)(?:-continued)?$/  
                 #ignore
               when /^Tellers for the (Ayes|Noes):/
                 @tellers = true
-              when /^[A-Z][a-z]*, (rh)?\s?(Mr|Ms|Mrs|Sir)?\s?[A-Z][a-z]*/
+              when /^(?:d(?:e|u|')\s)?(?:Ma?c)?(?:(?:o|O)')?[A-Z][a-z]+(?:(?:\-| )?(?:Ma?c)?[A-Z][a-z]*)?, (?:rh)?\s?(?:Mr|Ms|Mrs|Miss|Dr|Sir)?\s?[A-Z][a-z]*/
                 if @current_list == "ayes"
                   @div_snippet.ayes << text.strip
                 else
