@@ -52,21 +52,21 @@ task :scrape_hansard do
   Date.parse(date)
 
   #great, go
-  # parser = DebatesParser.new(date)
-  # parser.parse_pages
-  # 
+  parser = DebatesParser.new(date)
+  parser.parse_pages
+  
   parser = WHDebatesParser.new(date)
   parser.parse_pages
-  # 
+  
   parser = WMSParser.new(date)
   parser.parse_pages
-  # 
-  # # TODO: Petitions
-  # 
+  
+  # TODO: Petitions
+  
   parser = WrittenAnswersParser.new(date)
   parser.parse_pages
-  # 
-  # # TODO: Ministerial Corrections
+  
+  # TODO: Ministerial Corrections
 end
 
 desc "index a day's worth of hansard"
@@ -87,6 +87,9 @@ task :index_hansard do
   indexer = Indexer.new
   
   hansard = Hansard.find_by_date(date)
+  
+  raise "no data for this date" unless hansard
+  
   hansard.sections.each do |section|
     section.fragments.each do |fragment|
       if fragment.columns.size > 1
@@ -139,10 +142,7 @@ namespace :kindle do
     end
     parsed_date = Date.parse(date)
 
-    display_date = "#{parsed_date.strftime("%A %d %B %Y")}"
-    if display_date =~ /^(([A-Z][a-z]*day )0(\d)) [A-Z]/
-      display_date = display_date.gsub($1, "#{$2}#{$3}")
-    end
+    display_date = "#{parsed_date.strftime("%A %e %B %Y")}"
 
     #make sure there is hansard content available for the requested date
     hansard = Hansard.find("#{date}_hansard_c")
