@@ -220,7 +220,7 @@ class WMSParserTest < Test::Unit::TestCase
           <tbody>
           <tr valign="top">
             <td>Heading 1</td>
-            <td class="tabletext">They don't use TH so neither can I</td>
+            <td class="tabletext"><a class="anchor" name="11071985000898"> </a>They don't use TH so neither can I</td>
           </tr>
           <tr>
             <td>Ukraine</td>
@@ -242,7 +242,7 @@ class WMSParserTest < Test::Unit::TestCase
       statement.expects(:title=).with('Catering')
       statement.expects(:paragraphs).at_least_once.returns([])
       statement.expects(:id).at_least_once.returns("statement")
-      statement.expects(:k_html=).with('<h3>House of Commons Commission</h3><p>&nbsp;</p><h4>Catering</h4><p>&nbsp;</p><p><b>Mr Crispin Blunt</b>: Statement goes here</p><p>&nbsp;</p><table border="1"><tbody> <tr valign="top"> <td>Heading 1</td> <td class="tabletext">They don&apos;t use TH so neither can I</td> </tr> <tr> <td>Ukraine</td> <td>&gt;&pound;1,000</td> </tr> </tbody></table>')
+      statement.expects(:k_html=).with('<h3>House of Commons Commission</h3><p>&nbsp;</p><h4>Catering</h4><p>&nbsp;</p><p><b>Mr Crispin Blunt</b>: Statement goes here</p><p>&nbsp;</p><table border="1"><tbody> <tr valign="top"> <td>Heading 1</td> <td class="tabletext"> They don&apos;t use TH so neither can I</td> </tr> <tr> <td>Ukraine</td> <td>&gt;&pound;1,000</td> </tr> </tbody></table>')
       
       contribution = ContributionPara.new
       ContributionPara.expects(:find_or_create_by_id).with("statement_p000001").returns(contribution)

@@ -65,7 +65,7 @@ class WMSParser < Parser
           end
           
           snippet = HansardSnippet.new
-          snippet.text = node.to_html
+          snippet.text = node.to_html.gsub(/<a class="[^"]*" name="[^"]*">\s?<\/a>/, "")
           snippet.link = "#{page.url}\##{@last_link}"
           
           if @member
