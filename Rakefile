@@ -169,6 +169,7 @@ namespace :kindle do
     contents_file.write(%Q|<html>
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <meta name="pubdate" content="#{date}"/>
     <title>Table of Contents</title>
   </head>
   <body>
@@ -279,7 +280,7 @@ namespace :kindle do
         opf_guide = %Q|#{opf_guide}    <reference href="#{file_ref}.html" type="text" title="#{frag[:title]}"/>\n|
         
         #create the file itself
-        File.open("kindle/#{file_ref}.html", 'w') { |f| f.write(%Q|<html><body>#{frag[:html]}</body></html>|) }
+        File.open("kindle/#{file_ref}.html", 'w') { |f| f.write(%Q|<html><head><title>#{frag[:title]}</title><meta name="pubdate" content="#{date}"/></head><body>#{frag[:html]}</body></html>|) }
       end
       
       #write the section footers
