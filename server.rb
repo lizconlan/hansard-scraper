@@ -4,7 +4,7 @@ require 'cgi'
 require 'sunspot'
 require 'haml'
 
-require 'models/hansard'
+require 'models/daily_part'
 require 'models/section'
 require 'models/fragment'
 require 'models/paragraph'
@@ -113,4 +113,10 @@ get '/:date/:house/:section/:fragment.:format' do
   key = params[:date] + "_hansard_" + params[:house].downcase()[0..0] + "_" + params[:section] + "_" + params[:fragment]
   frag = Fragment.find(key)
   frag.to_simple_html
+end
+
+get '/:date/:house/:section.:format' do
+  key = params[:date] + "_hansard_" + params[:house].downcase()[0..0] + "_" + params[:section]
+  section = Section.find(key)
+  section.to_simple_html
 end
