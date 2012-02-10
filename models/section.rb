@@ -3,23 +3,23 @@ require 'mongo_mapper'
 class Section
   include MongoMapper::Document
   
-  belongs_to :hansard
+  belongs_to :daily_part
   many :fragments, :in => :fragment_ids, :order => :sequence
   
   def date
-    hansard.date
+    daily_part.date
   end
   
   def volume
-    hansard.volume
+    daily_part.volume
   end
   
   def part
-    hansard.part
+    daily_part.part
   end
   
   def house
-    hansard.house
+    daily_part.house
   end
   
   key :fragment_ids, Array

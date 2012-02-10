@@ -21,7 +21,7 @@ require 'lib/parsers/commons/written_answers_parser'
 require 'lib/indexer'
 
 #persisted models
-require 'models/hansard'
+require 'models/daily_part'
 require 'models/section'
 require 'models/fragment'
 require 'models/paragraph'
@@ -86,11 +86,11 @@ task :index_hansard do
   #great, go
   indexer = Indexer.new
   
-  hansard = Hansard.find_by_date(date)
+  daily_part = DailyPart.find_by_date(date)
   
-  raise "no data for this date" unless hansard
+  raise "no data for this date" unless daily_part
   
-  hansard.sections.each do |section|
+  daily_part.sections.each do |section|
     section.fragments.each do |fragment|
       if fragment.columns.size > 1
         columns = "#{fragment.columns.first} to #{fragment.columns.last}"
@@ -99,14 +99,14 @@ task :index_hansard do
       end
       snippet_hash = {
         :id => fragment.id,
-        :published_at => Time.parse("#{hansard.date}T00:00:01Z"),
+        :published_at => Time.parse("#{daily_part.date}T00:00:01Z"),
         :search_text => fragment.paragraphs.collect { |x| x.text }.join(' '),
         :subject => fragment.title,
-        :volume => hansard.volume,
-        :part => hansard.part,
+        :volume => daily_part.volume,
+        :part => daily_part.part,
         :columns => columns,
         :url => fragment.url,
-        :house => hansard.house,
+        :house => daily_part.house,
         :section => section.name
       }
       if fragment.respond_to?("members")
@@ -145,11 +145,11 @@ namespace :kindle do
     display_date = "#{parsed_date.strftime("%A %e %B %Y")}"
 
     #make sure there is hansard content available for the requested date
-    hansard = Hansard.find("#{date}_hansard_c")
-    unless hansard
+    daily_part = DailyPart.find("#{date}_hansard_c")
+    unless daily_part
       raise "No Hansard content available for #{date}"
     end
-    if hansard.sections == []
+    if daily_part.sections == []
       raise "No Hansard content available for #{date}"
     end
     
@@ -223,7 +223,7 @@ namespace :kindle do
 
     play_order = 0
     
-    hansard.sections.each do |section|
+    daily_part.sections.each do |section|
       file_refs = []
       fragments = section.k_html_fragments
       

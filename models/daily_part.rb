@@ -1,6 +1,6 @@
 require 'mongo_mapper'
 
-class Hansard
+class DailyPart
   include MongoMapper::Document
   
   many :sections, :in => :section_ids, :order => :sequence

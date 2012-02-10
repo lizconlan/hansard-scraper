@@ -242,9 +242,9 @@ class WrittenAnswersParser < Parser
           @hansard_section.fragments << @question
           @hansard_section.save
         
-          @hansard.volume = page.volume
-          @hansard.part = sanitize_text(page.part.to_s)
-          @hansard.save
+          @daily_part.volume = page.volume
+          @daily_part.part = sanitize_text(page.part.to_s)
+          @daily_part.save
         
           @question.section = @hansard_section
 

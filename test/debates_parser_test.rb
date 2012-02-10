@@ -11,15 +11,15 @@ class DebatesParserTest < Test::Unit::TestCase
     ContributionPara.any_instance.stubs(:save)
     Timestamp.any_instance.stubs(:save)
     Section.any_instance.stubs(:save)
-    Hansard.any_instance.stubs(:save)
+    DailyPart.any_instance.stubs(:save)
     Debate.any_instance.stubs(:save)
     Question.any_instance.stubs(:save)
     Division.any_instance.stubs(:save)
   end
   
-  def stub_hansard
-    @hansard = Hansard.new()
-    Hansard.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@hansard)
+  def stub_daily_part
+    @daily_part = DailyPart.new()
+    DailyPart.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@daily_part)
   end
   
   def stub_page(file)
@@ -36,7 +36,7 @@ class DebatesParserTest < Test::Unit::TestCase
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
       stub_saves
-      stub_hansard
+      stub_daily_part
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
@@ -82,7 +82,7 @@ class DebatesParserTest < Test::Unit::TestCase
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
       stub_saves
-      stub_hansard
+      stub_daily_part
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
@@ -209,7 +209,7 @@ class DebatesParserTest < Test::Unit::TestCase
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
       stub_saves
-      stub_hansard
+      stub_daily_part
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
@@ -535,7 +535,7 @@ class DebatesParserTest < Test::Unit::TestCase
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
       stub_saves
-      stub_hansard
+      stub_daily_part
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")

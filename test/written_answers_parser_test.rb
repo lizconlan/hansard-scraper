@@ -11,13 +11,13 @@ class WrittenAnswersParserTest < Test::Unit::TestCase
     ContributionPara.any_instance.stubs(:save)
     ContributionTable.any_instance.stubs(:save)
     Section.any_instance.stubs(:save)
-    Hansard.any_instance.stubs(:save)
+    DailyPart.any_instance.stubs(:save)
     Question.any_instance.stubs(:save)
   end
   
-  def stub_hansard
-    @hansard = Hansard.new()
-    Hansard.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@hansard)
+  def stub_daily_part
+    @daily_part = DailyPart.new()
+    DailyPart.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@daily_part)
   end
   
   def stub_page(file, mock_html=nil)
@@ -38,7 +38,7 @@ class WrittenAnswersParserTest < Test::Unit::TestCase
       setup do
         @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/text/110719w0001.htm"
         stub_saves
-        stub_hansard
+        stub_daily_part
         
         @parser = WrittenAnswersParser.new("2099-01-01")
         @parser.expects(:section_prefix).returns("w")
@@ -192,7 +192,7 @@ class WrittenAnswersParserTest < Test::Unit::TestCase
     setup do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/text/110719w0001.htm"
       stub_saves
-      stub_hansard
+      stub_daily_part
       
       @parser = WrittenAnswersParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("w")

@@ -531,9 +531,9 @@ class DebatesParser < Parser
             @hansard_section.fragments << @debate
             @hansard_section.save
 
-            @hansard.volume = page.volume
-            @hansard.part = sanitize_text(page.part.to_s)
-            @hansard.save
+            @daily_part.volume = page.volume
+            @daily_part.part = sanitize_text(page.part.to_s)
+            @daily_part.save
 
             @debate.section = @hansard_section
             @debate.title = @subject

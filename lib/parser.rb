@@ -8,7 +8,7 @@ require 'time'
 require 'models/hansard_page'
 require 'models/hansard_member'
 
-require 'models/hansard'
+require 'models/daily_part'
 require 'models/section'
 require 'models/fragment'
 require 'models/paragraph'
@@ -23,9 +23,9 @@ class Parser
     @house = house
     @doc_id = "#{date}_hansard_#{house[0..0].downcase()}"
     
-    @hansard = Hansard.find_or_create_by_id(@doc_id)
-    @hansard.house = house
-    @hansard.date = date
+    @daily_part = DailyPart.find_or_create_by_id(@doc_id)
+    @daily_part.house = house
+    @daily_part.date = date
     @hansard_section = nil
     @fragment = nil
     @element = nil
@@ -134,7 +134,7 @@ class Parser
       @hansard_section = Section.find_or_create_by_id(section_id)
       @hansard_section.url = @start_url
       @fragment_seq = 0
-      @hansard_section.hansard = @hansard
+      @hansard_section.daily_part = @daily_part
       
       case @section
         when "Debates and Oral Answers"
@@ -153,8 +153,8 @@ class Parser
           raise "unrecognised section: #{@section}"
       end
       
-      @hansard.sections << @hansard_section
-      @hansard.save
+      @daily_part.sections << @hansard_section
+      @daily_part.save
       
       @hansard_section.name = @section
       @hansard_section.save
