@@ -13,6 +13,8 @@ Fragments have a number of subtypes allowing them to be addressed generically as
 
 Thanks to the flexibility of Mongo, we can pull out Hansard content by Member name, by day, section or column reference. The column reference retrieval isn't 100% accurate as some of the data - notably for tables and divisions - isn't in the source HTML but it's still an interesting example of what can be done.
 
+A separate project, tentatively entitled the "Small Hansard Collider" is scratching out the early stages of using a more detailed data source. However this has not yet been open sourced as the necessary permissions have yet to be sought from the original data owners.
+
 ## Bonus Features
 
 As well as scraping the HTML into the db, there are also rake tasks to manipulate the stored data.
