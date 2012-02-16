@@ -19,8 +19,8 @@ As well as scraping the HTML into the db, there are also rake tasks to manipulat
 
 ### Search
 
-The rake task <code>index_hansard date=YYYY-MM-DD</code> indexes a day's worth of Hansard using Sunspot to talk to the WebSolr index.
+Running <code>rake index_hansard date=YYYY-MM-DD</code> indexes a day's worth of Hansard using Sunspot to talk to the WebSolr index.
 
 ### Kindle
 
-As part of the parsing process, simplified k_html fields are stored at the Fragment level. The rake task <code>kindle:generate_edition_commons</code> grabs a day's worth, shuffles them into the correct order and does all the fiddly stuff needed to generate a .mobi file in Kindle newspaper format.
+As part of the parsing process, simplified k_html fields are stored at the Fragment level. <code>rake kindle:generate_edition_commons date=YYYY-MM-DD</code> grabs a day's worth, shuffles them into the correct order and does all the fiddly stuff needed to generate a .mobi file in Kindle newspaper format.
