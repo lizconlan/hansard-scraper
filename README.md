@@ -5,11 +5,9 @@ Scrapes pages from publications.parliament.uk, parses them and stores them in Mo
 ## Storage Structure
 
 Each day's worth of Hansard is stored as a DailyPart which contains Sections which themselves comprise 
-Fragments of individual Paragraphs.
+Fragments of individual Paragraphs. (As it turns out, "paragraph" is a slightly misleading term - technically they are (or at least can be) paragraph fragments. More should be done to make the distinction clear (or at least flag paragraphs which should be treated as fragmented). Paragraph fragmentation occurs when a paragraph spans 2 columns.)
 
 Fragments have a number of subtypes allowing them to be addressed generically as Fragments or as Debates, Statements, Questions and Intros, all with their own attribute signatures. By the same token, Paragraphs can also be ContributionParas (Member contributions), NonContributionParas (linking text, etc), ContributionTables (a little misleading perhaps but you get the idea) and Divisions.
-
-To be honest "paragraph" is a slightly misleading term - technically they are (or at least can be) paragraph fragments. More should be done to make the distinction clear (or at least flag paragraphs which should be treated as fragmented). Paragraph fragmentation occurs when a paragraph spans 2 columns.
 
 ## Data Retrieval
 
