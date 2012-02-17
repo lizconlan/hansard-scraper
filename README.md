@@ -26,3 +26,11 @@ Running <code>rake index_hansard date=YYYY-MM-DD</code> indexes a day's worth of
 ### Kindle
 
 As part of the parsing process, simplified k_html fields are stored at the Fragment level; <code>rake kindle:generate_edition_commons date=YYYY-MM-DD</code> grabs a day's worth, shuffles them into the correct order and does all the fiddly stuff needed to generate a .mobi file in Kindle newspaper format.
+
+## Installation
+
+* add your MongoDB connection string to mongo.yml.example
+* add your WebSolr string to websolr.yml.example
+* rename websolr.yml.example to websolr.yml
+* rename mongo.yml.example to mongo.yml
+* bundle install
