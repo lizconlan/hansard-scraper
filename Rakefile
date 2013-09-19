@@ -3,39 +3,68 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
-require 'rake'
-require 'rake/testtask'
+require 'rspec/core/rake_task'
+
+namespace :spec do
+  desc "Run tests with SimpleCov"
+  RSpec::Core::RakeTask.new(:cov) do |t|
+    ENV["COVERAGE"] = "1"
+  end
+end
+
+RSpec::Core::RakeTask.new(:spec)
+
+task :default => :spec
 
 require 'mongo_mapper'
 require 'time'
-require 'rcov'
 
 #parser libraries
-require 'lib/parsers/commons/debates_parser'
-require 'lib/parsers/commons/wh_debates_parser'
-require 'lib/parsers/commons/wms_parser'
-require 'lib/parsers/commons/written_answers_parser'
+require './lib/parsers/commons/debates_parser'
+require './lib/parsers/commons/wh_debates_parser'
+require './lib/parsers/commons/wms_parser'
+require './lib/parsers/commons/written_answers_parser'
 
 
 #indexer
-require 'lib/indexer'
+require './lib/indexer'
 
 #persisted models
-require 'models/daily_part'
-require 'models/section'
-require 'models/fragment'
-require 'models/paragraph'
+require './models/daily_part'
+require './models/section'
+require './models/fragment'
+require './models/paragraph'
 
 #non-persisted models
-require 'models/hansard_member'
-require 'models/hansard_page'
-require 'models/snippet'
+require './models/hansard_member'
+require './models/hansard_page'
+require './models/snippet'
 
-MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[:mongohq_url]
+task :env do
+  unless ENV["RACK_ENV"]
+    if ENV['MONGOHQ_URL']
+      ENV["RACK_ENV"] = "production"
+    else
+      ENV["RACK_ENV"] = "development"
+    end
+  end
+end
 
-env = {}
-MongoMapper.config = { env => {'uri' => MONGO_URL} }
-MongoMapper.connect(env)
+namespace :db do
+  namespace :test do
+    task :prepare do
+      # Stub out for MongoDB
+    end
+  end
+end
+
+
+task :db do
+  MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[ENV["RACK_ENV"]][:uri]
+  env = {}
+  MongoMapper.config = { env => {'uri' => MONGO_URL} }
+  MongoMapper.connect(env)
+end
 
 desc "scrape a day's worth of hansard"
 task :scrape_hansard do
@@ -301,21 +330,5 @@ namespace :kindle do
     ncx_file.close
     
     `cd kindle; kindlegen HoC_Hansard.opf`
-  end
-end
-
-Rake::TestTask.new do |t|
-  t.libs << "test"
-  t.test_files = FileList['test/*_test.rb']
-end
-
-namespace :test do
-  desc "rcov"
-  task :rcov do
-    rm_f "coverage"
-    rm_f "coverage.data"
-    rcov = "rcov --rails --aggregate coverage.data -Ilib \
-                     --text-summary -x 'bundler/*,gems/*'"
-    system("#{rcov} --html */*_test.rb")
   end
 end

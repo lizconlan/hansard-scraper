@@ -1,4 +1,4 @@
-require 'lib/parser'
+require './lib/parser'
 
 class WHDebatesParser < Parser
   attr_reader :section, :section_prefix
@@ -270,11 +270,13 @@ class WHDebatesParser < Parser
           @debate.k_html = @k_html.join("<p>&nbsp;</p>")
           @debate.save
           @start_column = @end_column if @end_column != ""
-      
-          p @subject
-          p segment_id
-          p @segment_link
-          p ""
+          
+          unless ENV["RACK_ENV"] == "test"
+            p @subject
+            p segment_id
+            p @segment_link
+            p ""
+          end
         end
       end
       @k_html = []

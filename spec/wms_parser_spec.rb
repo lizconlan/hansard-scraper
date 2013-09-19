@@ -1,10 +1,7 @@
-require 'test/unit'
-require 'mocha'
-require 'shoulda'
+require './spec/rspec_helper.rb'
+require './lib/parsers/commons/wms_parser'
 
-require 'lib/parsers/commons/wms_parser'
-
-class WMSParserTest < Test::Unit::TestCase
+describe WMSParser do
   def stub_saves
     Intro.any_instance.stubs(:save)
     NonContributionPara.any_instance.stubs(:save)
@@ -35,7 +32,7 @@ class WMSParserTest < Test::Unit::TestCase
   end
   
   context "in general" do
-      setup do
+      before(:each) do
         @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/wmstext/110719m0001.htm"
         stub_saves
         stub_daily_part
@@ -45,8 +42,8 @@ class WMSParserTest < Test::Unit::TestCase
         @parser.expects(:link_to_first_page).returns(@url)
       end
   
-      should "create the Intro section, including the k_html field" do
-        stub_page("test/data/wms.html")
+      it "should create the Intro section, including the k_html field" do
+        stub_page("spec/data/wms.html")
         HansardPage.expects(:new).returns(@page)
         
         section = Section.new
@@ -88,8 +85,8 @@ class WMSParserTest < Test::Unit::TestCase
         @parser.parse_pages
       end
       
-      should "create the Statement sections, including the k_html field" do
-        stub_page("test/data/wms.html")
+      it "should create the Statement sections, including the k_html field" do
+        stub_page("spec/data/wms.html")
         HansardPage.expects(:new).returns(@page)
         
         section = Section.new
@@ -186,7 +183,7 @@ class WMSParserTest < Test::Unit::TestCase
     end
     
   context "when dealing with edge cases" do
-    setup do
+    before(:all) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/text/110719w0001.htm"
       stub_saves
       stub_daily_part
@@ -196,7 +193,7 @@ class WMSParserTest < Test::Unit::TestCase
       @parser.expects(:link_to_first_page).returns(@url)
     end
     
-    should "handle tables without escaping the markup" do
+    it "should handle tables without escaping the markup" do
       html = %Q|<div id="content-small">
         <a class="anchor" name="11071988000009"></a>
         <a class="anchor-column" name="column_831"></a>

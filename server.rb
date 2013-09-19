@@ -4,16 +4,24 @@ require 'cgi'
 require 'sunspot'
 require 'haml'
 
-require 'models/daily_part'
-require 'models/section'
-require 'models/fragment'
-require 'models/paragraph'
-require 'models/snippet'
+require './models/daily_part'
+require './models/section'
+require './models/fragment'
+require './models/paragraph'
+require './models/snippet'
 
 before do
   Sunspot.config.solr.url = ENV['WEBSOLR_URL'] || YAML::load(File.read("config/websolr.yml"))[:websolr_url]
   
-  MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[:mongohq_url]
+  unless ENV["RACK_ENV"]
+    if ENV['MONGOHQ_URL']
+      ENV["RACK_ENV"] = "production"
+    else
+      ENV["RACK_ENV"] = "development"
+    end
+  end
+  
+  MONGO_URL = ENV['MONGOHQ_URL'] || YAML::load(File.read("config/mongo.yml"))[ENV["RACK_ENV"]][:uri]
   env = {}
   MongoMapper.config = { env => {'uri' => MONGO_URL} }
   MongoMapper.connect(env)
@@ -66,22 +74,22 @@ end
 
 get '/' do
   @q = params[:q]
-	@section_filter = params[:section]
-	@page = params[:p]
-	if @page.to_i < 1
-	  @page = 1 
-	else
-	  @page = @page.to_i
-	end
-	
-	if @q	  
-	  search_results = Sunspot.search(HansardFragment) do |query|
-	    query.keywords @q do
-	      highlight :text, {:fragment_size => 150}
-	    end
-	    query.facet :section, :volume, :house
+  @section_filter = params[:section]
+  @page = params[:p]
+  if @page.to_i < 1
+    @page = 1 
+  else
+    @page = @page.to_i
+  end
+  
+  if @q
+    search_results = Sunspot.search(HansardFragment) do |query|
+      query.keywords @q do
+        highlight :text, {:fragment_size => 150}
+      end
+      query.facet :section, :volume, :house
     end
-	  
+    
     # if @section_filter
     #   url = "#{url}&fq=section_ss:%22#{CGI::escape(@section_filter)}%22"
     # end
@@ -89,10 +97,10 @@ get '/' do
     # if @page > 1
     #   url = "#{url}&start=#{(@page.to_i-1)*10}"
     # end
-	  
-	  @found = search_results.hits.count
-	  @results = search_results
-	  
+    
+    @found = search_results.hits.count
+    @results = search_results
+    
     # unless CGI::escape(query).empty?
     #   buffer = open(url).read
     #         result = JSON.parse(buffer)
@@ -106,7 +114,7 @@ get '/' do
     #     end
   end
   
-	haml :index
+  haml :index
 end
 
 get '/:date/:house/:section/:fragment.:format' do
@@ -119,4 +127,8 @@ get '/:date/:house/:section.:format' do
   key = params[:date] + "_hansard_" + params[:house].downcase()[0..0] + "_" + params[:section]
   section = Section.find(key)
   section.to_simple_html
+end
+
+class HansardFragment
+  :text_fields
 end

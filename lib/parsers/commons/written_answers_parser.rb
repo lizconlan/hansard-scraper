@@ -1,4 +1,4 @@
-require 'lib/parser'
+require './lib/parser'
 
 class WrittenAnswersParser < Parser
   attr_reader :section, :section_prefix
@@ -303,11 +303,13 @@ class WrittenAnswersParser < Parser
           @question.members = col_paras.collect{|x| x.member}.uniq
           @question.save
           @start_column = @end_column if @end_column != ""
-      
-          p @subject
-          p segment_id
-          p @segment_link
-          p ""
+          
+          unless ENV["RACK_ENV"] == "test"
+            p @subject
+            p segment_id
+            p @segment_link
+            p ""
+          end
         end
       end
       @k_html = []

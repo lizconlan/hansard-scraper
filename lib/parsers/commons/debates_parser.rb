@@ -1,4 +1,4 @@
-require 'lib/parser'
+require './lib/parser'
 
 class DebatesParser < Parser
   attr_reader :section, :section_prefix
@@ -481,28 +481,28 @@ class DebatesParser < Parser
         intro.section = @hansard_section
         intro.url = @intro[:link]
         intro.sequence = @fragment_seq
-
+        
         @intro[:snippets].each_with_index do |snippet, i|
           @para_seq += 1
           para_id = "#{intro.id}_p#{@para_seq.to_s.rjust(6, "0")}"
-
+          
           para = NonContributionPara.find_or_create_by_id(para_id)
           para.fragment = intro
           para.text = snippet
           para.sequence = @para_seq
           para.url = @intro[:links][i]
           para.column = @intro[:columns][i]
-
+          
           para.save
           intro.paragraphs << para
         end
         intro.columns = intro.paragraphs.collect{ |x| x.column }.uniq
         intro.k_html = @k_html.join("<p>&nbsp;</p>")
-
+        
         intro.save
         @hansard_section.fragments << intro
         @hansard_section.save
-
+        
         @intro = {:snippets => [], :columns => [], :links => []}
       else
         unless @snippet.empty?
@@ -511,14 +511,14 @@ class DebatesParser < Parser
           if @segment_link #no point storing pointers that don't link back to the source
             @fragment_seq += 1
             segment_id = "#{@hansard_section.id}_#{@fragment_seq.to_s.rjust(6, "0")}"
-
+            
             column_text = ""
             if @start_column == @end_column or @end_column == ""
               column_text = @start_column
             else
               column_text = "#{@start_column} to #{@end_column}"
             end
-
+            
             if @subsection == "Oral Answer"
               @debate = Question.find_or_create_by_id(segment_id)
               @debate.number = @questions.last
@@ -526,26 +526,26 @@ class DebatesParser < Parser
             else
               @debate = Debate.find_or_create_by_id(segment_id)
             end
-          
+            
             @para_seq = 0
             @hansard_section.fragments << @debate
             @hansard_section.save
-
+            
             @daily_part.volume = page.volume
             @daily_part.part = sanitize_text(page.part.to_s)
             @daily_part.save
-
+            
             @debate.section = @hansard_section
             @debate.title = @subject
             @debate.url = @segment_link
-
+            
             @debate.sequence = @fragment_seq
-
+            
             @snippet.each do |snippet|
               unless snippet.text == @debate.title or snippet.text == ""
                 @para_seq += 1
                 para_id = "#{@debate.id}_p#{@para_seq.to_s.rjust(6, "0")}"
-
+                
                 case snippet.desc
                   when "timestamp"
                     para = Timestamp.find_or_create_by_id(para_id)
@@ -571,32 +571,34 @@ class DebatesParser < Parser
                       end
                     end
                 end
-
+                
                 col_paras = @debate.paragraphs.dup
                 col_paras.delete_if{|x| x.respond_to?("member") == false }
                 @debate.members = col_paras.collect{|x| x.member}.uniq
-
+                
                 para.text = snippet.text
                 para.url = snippet.link
                 para.column = snippet.column
                 para.sequence = @para_seq
                 para.fragment = @debate
                 para.save
-
+                
                 @debate.paragraphs << para
               end
             end
           end
-
+          
           @debate.columns = @debate.paragraphs.collect{|x| x.column}.uniq
           @debate.k_html = @k_html.join("<p>&nbsp;</p>")
           @debate.save
           @start_column = @end_column if @end_column != ""
-
-          p @subject
-          p segment_id
-          p @segment_link
-          p ""
+          
+          unless ENV["RACK_ENV"] == "test"
+            p @subject
+            p segment_id
+            p @segment_link
+            p ""
+          end
         end
       end
       @k_html = []

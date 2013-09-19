@@ -1,11 +1,8 @@
-require 'test/unit'
-require 'mocha'
-require 'shoulda'
+require './spec/rspec_helper.rb'
+require './lib/parsers/commons/wh_debates_parser'
 
-require 'lib/parsers/commons/wh_debates_parser'
-
-class WHDebatesParserTest < Test::Unit::TestCase
-  def stub_saves
+describe WHDebatesParser do
+  before(:each) do
     Intro.any_instance.stubs(:save)
     NonContributionPara.any_instance.stubs(:save)
     ContributionPara.any_instance.stubs(:save)
@@ -13,37 +10,47 @@ class WHDebatesParserTest < Test::Unit::TestCase
     Section.any_instance.stubs(:save)
     DailyPart.any_instance.stubs(:save)
     Debate.any_instance.stubs(:save)
+    Question.any_instance.stubs(:save)
+    Division.any_instance.stubs(:save)
   end
   
-  def stub_daily_part
-    @daily_part = DailyPart.new()
-    DailyPart.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@daily_part)
+  def stub_part(house, date, part, volume)
+    @daily_part = DailyPart.new
+    DailyPart.stubs(:find_or_create_by_id).returns(@daily_part)
+    @daily_part.expects(:house=).with(house)
+    @daily_part.expects(:date=).with(date)
+    if part
+      @daily_part.expects(:part=).at_least_once.with(part)
+    end
+    @daily_part.stubs(:persisted?)
+    @daily_part.stubs(:id)
+    @daily_part.stubs(:save)
+    @daily_part.stubs(:sections).returns([])
   end
   
   def stub_page(file)
     html = File.read(file)
-    @page = mock()
+    @page = mock("HansardPage")
+    HansardPage.stubs(:new).returns(@page)
     @page.expects(:next_url).returns(nil)
     @page.expects(:doc).returns(Nokogiri::HTML(html))
     @page.expects(:url).at_least_once.returns(@url)
-    @page.expects(:volume).at_least_once.returns("531")
-    @page.expects(:part).at_least_once.returns("190")
+    @page.stubs(:volume).returns("531")
+    @page.stubs(:part).returns("190")
   end
   
   context "in general" do
-    setup do
+    before(:each) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/halltext/110719h0001.htm"
-      stub_saves
-      stub_daily_part
+      stub_part("Commons", "2099-01-01", nil, "190")
       
       @parser = WHDebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("wh")
       @parser.expects(:link_to_first_page).returns(@url)
     end
-
-    should "create the Intro section, including the k_html field" do
-      stub_page("test/data/wh_debates.html")
-      HansardPage.expects(:new).returns(@page)
+    
+    it "should create the Intro section, including the k_html field" do
+      stub_page("spec/data/wh_debates.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_wh').returns(section)
@@ -99,9 +106,8 @@ class WHDebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
     
-    should "create the Debate section, including the k_html field" do
-      stub_page("test/data/wh_debates.html")
-      HansardPage.expects(:new).returns(@page)
+    it "should create the Debate section, including the k_html field" do
+      stub_page("spec/data/wh_debates.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_wh').returns(section)

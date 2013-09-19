@@ -1,4 +1,4 @@
-require 'lib/parser'
+require './lib/parser'
 
 class WMSParser < Parser
   attr_reader :section, :section_prefix
@@ -280,11 +280,13 @@ class WMSParser < Parser
           @statement.members = @statement.paragraphs.collect{|x| x.member}.uniq
           @statement.save
           @start_column = @end_column if @end_column != ""
-      
-          p @subject
-          p segment_id
-          p @segment_link
-          p ""
+          
+          unless ENV["RACK_ENV"] == "test"
+            p @subject
+            p segment_id
+            p @segment_link
+            p ""
+          end
         end
       end
       reset_vars()

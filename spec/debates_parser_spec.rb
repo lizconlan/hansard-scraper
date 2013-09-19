@@ -1,11 +1,10 @@
-require 'test/unit'
-require 'mocha'
-require 'shoulda'
+#encoding: utf-8
 
-require 'lib/parsers/commons/debates_parser'
+require './spec/rspec_helper.rb'
+require './lib/parsers/commons/debates_parser'
 
-class DebatesParserTest < Test::Unit::TestCase
-  def stub_saves
+describe DebatesParser do
+  before(:each) do
     Intro.any_instance.stubs(:save)
     NonContributionPara.any_instance.stubs(:save)
     ContributionPara.any_instance.stubs(:save)
@@ -17,14 +16,10 @@ class DebatesParserTest < Test::Unit::TestCase
     Division.any_instance.stubs(:save)
   end
   
-  def stub_daily_part
-    @daily_part = DailyPart.new()
-    DailyPart.expects(:find_or_create_by_id).with("2099-01-01_hansard_c").returns(@daily_part)
-  end
-  
   def stub_page(file)
     html = File.read(file)
-    @page = mock()
+    @page = mock("HansardPage")
+    HansardPage.stubs(:new).returns(@page)
     @page.expects(:next_url).returns(nil)
     @page.expects(:doc).returns(Nokogiri::HTML(html))
     @page.expects(:url).at_least_once.returns(@url)
@@ -32,69 +27,93 @@ class DebatesParserTest < Test::Unit::TestCase
     @page.stubs(:part).returns("190")
   end
   
+  def stub_part(house, date, part, volume)
+    @daily_part = DailyPart.new
+    DailyPart.stubs(:find_or_create_by_id).returns(@daily_part)
+    @daily_part.expects(:house=).with(house)
+    @daily_part.expects(:date=).with(date)
+    if part
+      @daily_part.expects(:part=).at_least_once.with(part)
+    end
+    @daily_part.stubs(:persisted?)
+    @daily_part.stubs(:id)
+    @daily_part.stubs(:volume=).with(volume)
+    @daily_part.stubs(:save)
+    @daily_part.stubs(:sections).returns([])
+  end
+  
   context "in general" do
-    setup do
+    before(:each) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-      stub_saves
-      stub_daily_part
+      stub_part("Commons", "2099-01-01", "190", "531")
       
+      @section = Section.new
+      @section.stubs(:fragments).returns([])
+      Section.stubs(:find_or_create_by_id).returns(@section)
+      
+      DebatesParser.any_instance.stubs(:house=)
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
       @parser.expects(:link_to_first_page).returns(@url)
     end
     
-    should "pick out the timestamps" do
-      stub_page("test/data/backbench_business_excerpt.html")
-      HansardPage.expects(:new).returns(@page)
-      @page.expects(:volume).at_least_once.returns('531')
+    it "should pick out the timestamps" do
+      stub_page("spec/data/backbench_business_excerpt.html")
       @page.expects(:part).at_least_once.returns('190')
       
-      Section.stubs(:find_or_create_by_id).returns(Section.new)
-      Fragment.stubs(:find_or_create_by_id).returns(Fragment.new)
-      Fragment.any_instance.stubs(:k_html=)
-      Intro.stubs(:find_or_create_by_id).returns(Intro.new)
-      Intro.any_instance.stubs(:k_html=)
-      Intro.any_instance.stubs(:paragraphs).returns([])
+      intro = Intro.new
+      intro.stubs(:k_html=)
+      intro.stubs(:paragraphs).returns([])
+      Intro.stubs(:find_or_create_by_id).returns(intro)
       
       paragraph = Paragraph.new
       paragraph.stubs(:member=)
       paragraph.stubs(:member).returns("test")
-      Paragraph.stubs(:find_or_create_by_id).returns(paragraph)
       
-      NonContributionPara.stubs(:find_or_create_by_id).returns(NonContributionPara.new)
-      ContributionPara.stubs(:find_or_create_by_id).returns(ContributionPara.new)
+      nc = NonContributionPara.new
+      nc.stubs(:fragment=)
+      NonContributionPara.stubs(:find_or_create_by_id).returns(nc)
+      
+      cp = ContributionPara.new
+      cp.stubs(:fragment=)
+      ContributionPara.stubs(:find_or_create_by_id).returns(cp)
+      
+      div = Division.new
+      div.stubs(:fragment=)
+      Division.stubs(:find_or_create_by_id).returns(div)
+      
+      ts = Timestamp.new
+      ts.stubs(:fragment=)
+      Timestamp.stubs(:find_or_create_by_id).returns(ts)
       
       debate = Debate.new
       Debate.expects(:find_or_create_by_id).at_least_once.returns(debate)
       debate.expects(:paragraphs).at_least_once.returns([paragraph])
       debate.stubs(:k_html=)
       
-      timestamp = Timestamp.new()
-      Timestamp.expects(:find_or_create_by_id).at_least_once.returns(timestamp)
-      timestamp.expects(:text=).with("2.44 pm")
-      timestamp.expects(:text=).with("2.45 pm")
+      ts.expects(:text=).with("2.44 pm")
+      ts.expects(:text=).with("2.45 pm")
       
       @parser.parse_pages
     end
   end
     
   context "when handling Backbench Business section" do
-    setup do
+    before(:each) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-      stub_saves
-      stub_daily_part
+      stub_part("Commons", "2099-01-01", nil, "531")
+      
+      @section = Section.new
+      @section.stubs(:fragments).returns([])
+      Section.stubs(:find_or_create_by_id).returns(@section)
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
       @parser.expects(:link_to_first_page).returns(@url)
     end
-  
-    should "correctly recognise the Backbench Business section" do
-      stub_page("test/data/backbench_business_header.html")
-      HansardPage.expects(:new).returns(@page)
-      
-      section = Section.new
-      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
+    
+    it "should correctly recognise the Backbench Business section" do
+      stub_page("spec/data/backbench_business_header.html")
       
       intro = Intro.new
       Intro.expects(:find_or_create_by_id).returns(intro)
@@ -113,27 +132,23 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
     
-    should "handle the Intro properly and create Debate elements for each debate" do
-      stub_page("test/data/backbench_business_excerpt.html")
-      stub_saves
-      HansardPage.expects(:new).returns(@page)
-      
-      section = Section.new
-      Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
-      section.expects(:id).at_least_once.returns('2099-01-01_hansard_c_d')
+    it "should handle the Intro properly and create Debate elements for each debate" do
+      stub_page("spec/data/backbench_business_excerpt.html")
       
       ncpara = NonContributionPara.new
-      NonContributionPara.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001_p000001').returns(ncpara)
+      NonContributionPara.expects(:find_or_create_by_id).returns(ncpara)
       NonContributionPara.any_instance.stubs(:fragment=)
       NonContributionPara.any_instance.stubs(:text=)
       NonContributionPara.any_instance.stubs(:sequence=)
       NonContributionPara.any_instance.stubs(:url=)
       NonContributionPara.any_instance.stubs(:column=)
       
+      @section.stubs(:id).returns("2099-01-01_hansard_c_d")
+      
       intro = Intro.new
       Intro.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d_000001').returns(intro)
       intro.expects(:title=).with('Backbench Business')
-      intro.expects(:section=).with(section)
+      intro.expects(:section=).with(@section)
       intro.expects(:url=)
       intro.expects(:sequence=).with(1)
       intro.stubs(:columns=)
@@ -198,27 +213,22 @@ class DebatesParserTest < Test::Unit::TestCase
       contribution.expects(:column=).with("832")
       contribution.expects(:member=).with("Iain McKenzie")
       
-      @page.expects(:volume).at_least_once.returns('531')
-      @page.expects(:part).at_least_once.returns('190')
-      
       @parser.parse_pages
     end
   end
   
   context "when handling the Oral Answers section" do
-    setup do
+    before(:each) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-      stub_saves
-      stub_daily_part
+      stub_part("Commons", "2099-01-01", nil, "531")
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
       @parser.expects(:link_to_first_page).returns(@url)
     end
     
-    should "find and deal with the main heading and both intros" do
-      stub_page("test/data/debates_and_oral_answers_header.html")
-      stub_saves
+    it "should find and deal with the main heading and both intros" do
+      stub_page("spec/data/debates_and_oral_answers_header.html")
       HansardPage.expects(:new).returns(@page)
       
       section = Section.new
@@ -262,10 +272,8 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
     
-    should "create a Question for each question found" do
-      stub_page("test/data/debates_and_oral_answers.html")
-      stub_saves
-      HansardPage.expects(:new).returns(@page)
+    it "should create a Question for each question found" do
+      stub_page("spec/data/debates_and_oral_answers.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
@@ -377,10 +385,8 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
     
-    should "deal with the Topical Questions section" do
-      stub_page("test/data/topical_questions.html")
-      stub_saves
-      HansardPage.expects(:new).returns(@page)
+    it "should deal with the Topical Questions section" do
+      stub_page("spec/data/topical_questions.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
@@ -469,10 +475,8 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
     
-    should "not treat the first Debate as another Question" do
-      stub_page("test/data/topical_questions_end.html")
-      stub_saves
-      HansardPage.expects(:new).returns(@page)
+    it "should not treat the first Debate as another Question" do
+      stub_page("spec/data/topical_questions_end.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)
@@ -530,22 +534,19 @@ class DebatesParserTest < Test::Unit::TestCase
       @parser.parse_pages
     end
   end
-
+  
   context "when handling a Debate containing a Division" do
-    setup do
+    before(:each) do
       @url = "http://www.publications.parliament.uk/pa/cm201011/cmhansrd/cm110719/debtext/110719-0001.htm"
-      stub_saves
-      stub_daily_part
+      stub_part("Commons", "2099-01-01", nil, "531")
       
       @parser = DebatesParser.new("2099-01-01")
       @parser.expects(:section_prefix).returns("d")
       @parser.expects(:link_to_first_page).returns(@url)
     end
     
-    should "not handle store the Division with Ayes and Noes" do
-      stub_page("test/data/debate_with_division.html")
-      stub_saves
-      HansardPage.expects(:new).returns(@page)
+    it "should not handle store the Division with Ayes and Noes" do
+      stub_page("spec/data/debate_with_division.html")
       
       section = Section.new
       Section.expects(:find_or_create_by_id).with('2099-01-01_hansard_c_d').returns(section)

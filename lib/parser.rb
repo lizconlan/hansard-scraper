@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 require 'rubygems'
 require 'nokogiri'
 require 'rest-client'
@@ -5,13 +7,13 @@ require 'htmlentities'
 require 'date'
 require 'time'
 
-require 'models/hansard_page'
-require 'models/hansard_member'
+require './models/hansard_page'
+require './models/hansard_member'
 
-require 'models/daily_part'
-require 'models/section'
-require 'models/fragment'
-require 'models/paragraph'
+require './models/daily_part'
+require './models/section'
+require './models/fragment'
+require './models/paragraph'
 
 class Parser
   attr_reader :date, :doc_id, :house
@@ -254,15 +256,16 @@ class Parser
     end
     
     def sanitize_text(text)
-      text = text.gsub("\342\200\176", "'")
-      text = text.gsub("\342\200\177", "'")
-      text = text.gsub("\342\200\230", "'")
-      text = text.gsub("\342\200\231", "'")
-      text = text.gsub("\342\200\233", "'")
-      text = text.gsub("\342\200\234", '"')
-      text = text.gsub("\342\200\235", '"')
-      text = text.gsub("\342\200\224", " - ")
-      text = text.gsub("\302\243", "£")
+      text.force_encoding("utf-8")
+      # text = text.gsub("\342\200\177", "'")
+      # text = text.gsub("\342\200\230", "'")
+      # text = text.gsub("\342\200\231", "'")
+      text = text.gsub("’", "'")
+      text = text.gsub("‘", "'")
+      text = text.gsub("“", '"')
+      text = text.gsub("”", '"')
+      text = text.gsub("—", " - ")
+      # text = text.gsub("\302\243", "£")
       text
     end
     

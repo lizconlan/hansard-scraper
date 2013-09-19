@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 class HansardMember
   attr_reader :name, :index_name, :post, :party, :constituency, :search_name, :printed_name
   attr_accessor :contributions

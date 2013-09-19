@@ -12,7 +12,7 @@ gem 'htmlentities', '4.2.2'
 
 gem 'sinatra'
 
-gem 'sunspot', '~> 1.2.1'
+gem 'sunspot'
 gem 'builder', '2.1.2'
 
 group :development do
@@ -20,7 +20,7 @@ group :development do
 end
 
 group :test do
+  gem 'rspec'
   gem 'mocha'
-  gem 'shoulda'
-  gem 'rcov'
+  gem 'simplecov'
 end
